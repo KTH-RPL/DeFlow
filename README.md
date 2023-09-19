@@ -6,7 +6,8 @@ Under review, will public source code after acceptance around Feb.
 
 Task: Scene Flow Estimation in Autonomous Driving
 
-https://github.com/KTH-RPL/DeFlow/assets/35365764/982df3c1-563b-4737-90b2-21f62e045aa9
+https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a478b938
+
 
 **Scripts** quick view in `run_steps` folder:
 
