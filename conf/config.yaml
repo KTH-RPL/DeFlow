@@ -1,0 +1,38 @@
+
+defaults:
+  - hydra: default
+  - model: deflow
+  
+slurm_id: 00000
+
+wandb_mode: offline # [offline, disabled, online]
+wandb_project_name: deflow
+dataset_path: /home/kin/data/av2/preprocess/sensor
+
+output: ${model.name}-${slurm_id}
+
+checkpoint: 
+pretrained_weights: 
+eval_only: False
+
+# trainer
+num_workers: 8
+gpus: 1 # will change in code: torch.cuda.device_count()
+sync_bn: true
+batch_size: 1
+epochs: 3
+gradient_clip_val: 5.0
+
+# optimizer ==> Adam
+lr: 2e-6
+loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss]
+
+# log settings
+seed: 42069
+log_every: 10 # steps epochs*dataset_size/batch_size
+val_every: 5 # epochs
+save_top_model: 4 # top_k model will be saved.
+
+# -----> Model and Task Parameters
+voxel_size: [0.2, 0.2, 6]
+point_cloud_range: [-51.2, -51.2, -3, 51.2, 51.2, 3]

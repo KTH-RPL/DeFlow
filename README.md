@@ -2,107 +2,115 @@ DeFlow
 ---
 
 [![arXiv](https://img.shields.io/badge/arXiv-TODO.TODO-b31b1b.svg)](https://arxiv.org/abs/TODO.TODO) 
-Under review, will public source code after acceptance around Feb.
+Will present in ICRA'24.
 
 Task: Scene Flow Estimation in Autonomous Driving
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a478b938
 
-
 **Scripts** quick view in `run_steps` folder:
 
-- `0_preprocess.py` : pre-process data before training to speed up the whole training time
+- `0_preprocess.py` : pre-process data before training to speed up the whole training time.
 - `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
 - `2_eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
 - `3_vis.py` : For visualization of the results with a video.
 
 ## 0. Setup
 
-Install conda for package management and mamba for faster package installation:
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-
-curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
-bash Mambaforge-$(uname)-$(uname -m).sh
-```
-
-Clone the repo and build the environment
+**Environment**: Clone the repo and build the environment, check [detail installation](assets/README.md) for more information.
 ```
 git clone https://github.com/KTH-RPL/DeFlow
 cd DeFlow
-mamba env create -f environment.yml
+mamba env create -f environment.yaml
 ```
 
-## 1. Dataset
+mmcv:
+```bash
+mamba activate deflow
+cd ~/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install -e .
+```
 
-Since we focus on large point cloud dataset in autonomous driving, we choose Argoverse 2 for our dataset, you can also easily process other driving dataset in this framework. References: [3d_scene_flow user guide](https://argoverse.github.io/user-guide/tasks/3d_scene_flow.html), [Online Leaderboard](https://eval.ai/web/challenges/challenge-page/2010/evaluation).
+chamfer cuda:
+```bash
+cd ~/DeFlow/assets/cuda/chamfer3Dlib
+python ./setup.py install
+```
+
+## 1. Train
+
+Download tips in [assets/README.md](assets/README.md#dataset-download)
+
+### Prepare Data
 
 ```bash
-# train is really big (750): totally 966 GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/train/*" sensor/train
-
-# val (150) and test (150): totally 168GB + 168GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/val/*" sensor/val
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" sensor/test
+python 0_preprocess.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
+python 0_preprocess.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
+python 0_preprocess.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
 ```
 
-## 2. Train
+### Train Model
 
-Best fine-tuned model train with following command:
+All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in our experiments.
+
+Best fine-tuned model train with following command by other default config in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml):
 ```bash
 python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 ```
 
-All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in our experiments.
-
+Benchmarking and baseline methods:
 ```bash
-python 1_train.py model=fastflow3d lr=2e-6 epochs=50 batch_size=16 "model.target.TB=TB"
+python 1_train.py model=fastflow3d lr=2e-6 epochs=50 batch_size=16
+python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 
-python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16 "model.target.TB=TB"
+# for nsfp no need train but optimize iteration running
+python 2_eval.py model=nsfp 
+python 2_eval.py model=fast_nsfp
 ```
 
-## 3. Evaluation
+## 2. Evaluation
 
-You can view Wandb dashboard for the training and evaluation results or run the av2 leaderboard scripts to get official results.
+You can view Wandb dashboard for the training and evaluation results or [run/submit to av2 leaderboard to get official results](assets/README.md#leaderboard-submission).
 
-### Local Eval
-For the av2 leaderboard, we need to follow the official instructions:
+Since in training, we save all hyper-parameters and model checkpoints, so the only things you need to do is to specify the checkpoint path. Remember to set data path correctly also.
+```bash
+python 2_eval.py checkpoint=/home/kin/model.ckpt
+```
 
-1. Download the mask file for 3D scene flow task
-    ```bash
-    s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
-    ```
-2. `make_annotation_files.py`
-    ```
-    python3 av2-api/src/av2/evaluation/scene_flow/make_annotation_files.py /home/kin/data/av2/3d_scene_flow/eval /home/kin/data /home/kin/data/av2/3d_scene_flow/val-masks.zip --split val
-    ```
-3. `eval.py` computes all leaderboard metrics.
+Submit to Online Leaderboard, the last step will tell you the result path, copy it here:
+```bash
+# you will find there is a av2_submit.zip in the folder now. since the env is different and conflict we set new one:
+mamba create -n py37 python=3.7
+mamba activate py37
+pip install "evalai"
+
+# Step 2: login in eval and register your team
+evalai set_token <your token>
+
+# Step 3: Submit to leaderboard
+evalai challenge 2010 phase 4018 submit --file av2_submit.zip --large --private
+```
+
+## 3. Visualization
+
+We provide a script to visualize the results of the model. You can specify the checkpoint path and the data path to visualize the results. The step is quickly similar to evaluation.
+
+```bash
+python 3_vis.py checkpoint=/home/kin/model.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
+
+# Then terminal will tell you the command you need run. For example here is the output of the above:
+Model: DeFlow, Checkpoint from: /logs/wandb/deflow-10078447/checkpoints/epoch_35_seflow.ckpt
+We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
+python tests/scene_flow.py --flow_mode='flow_est' --data_dir=/home/kin/data/av2/preprocess/sensor/vis
+Enjoy! ^v^ ------ 
 
 
-### Online Eval
+# Then run the test with changed flow_mode between estimate and gt [flow_est, flow]
+python tests/scene_flow.py --flow_mode='flow_est' --data_dir=/home/kin/data/av2/preprocess/sensor/vis
+```
 
-1. The directory format should be that in `result_path`:
-    ```
-    - <test_log_1>/
-      - <test_timestamp_ns_1>.feather
-      - <test_timestamp_ns_2>.feather
-      - ...
-    - <test_log_2>/
-    - ...
-    ```
+Note: ego_motion already compensated, so the visualization is more clear.
 
-2. Run `make_submission_archive.py` to make the zip file for submission.
-    ```
-    python av2-api/src/av2/evaluation/scene_flow/make_submission_archive.py checkpoints/results/test/example /home/kin/data/av2/av2_3d_scene_flow/test-masks.zip --output_filename sub_example.zip
-    ```
-
-3. Submit on the website more commands on [EvalAI-CLI](https://cli.eval.ai/). Normally, one file may be around 1GB, so you need to use `--large` flag.
-    ```
-    evalai set_token <your token>
-    evalai challenge 2010 phase 4018 submit --file <submission_file_path> --large --private
-    ```
-4. Check in online eval leaderboard website: [Argoverse 2 Scene Flow](https://eval.ai/web/challenges/challenge-page/2010/leaderboard/4759).
+![](assets/docs/vis_res.png)
 
 ## Cite & Acknowledgements
 

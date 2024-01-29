@@ -1,0 +1,19 @@
+
+defaults:
+  - hydra: default
+  - model: deflow
+  
+slurm_id: 00000
+
+wandb_mode: offline # [offline, disabled, online]
+dataset_path: /home/kin/data/av2/preprocess/sensor
+
+output: ${model.name}-${slurm_id}
+
+checkpoint: /home/kin/model.ckpt
+av2_mode: val # [val, test]
+save_res: False # [True, False]
+
+# no need to change
+gpus: 1
+seed: 42069

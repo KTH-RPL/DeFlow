@@ -1,0 +1,10 @@
+name: deflow
+
+target:
+  _target_: scripts.network.models.deflow.DeFlow
+  decoder_option: gru # choices: [linear, gru]
+  num_iters: 4
+  voxel_size: ${voxel_size}
+  point_cloud_range: ${point_cloud_range}
+
+val_monitor: val/EPE_Three

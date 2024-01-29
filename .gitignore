@@ -1,0 +1,19 @@
+
+*.json
+logs/*
+*.pyc
+
+tmp_sbatch.sh
+*.log
+
+*.hydra
+
+*.h5
+
+*.zip
+
+cancel.sh
+
+# slurm log files
+*.err
+*.out
