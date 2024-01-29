@@ -8,7 +8,7 @@ Task: Scene Flow Estimation in Autonomous Driving
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a478b938
 
-**Scripts** quick view in `run_steps` folder:
+**Scripts** quick view in our scripts:
 
 - `0_preprocess.py` : pre-process data before training to speed up the whole training time.
 - `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
@@ -28,12 +28,6 @@ mmcv:
 ```bash
 mamba activate deflow
 cd ~/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install -e .
-```
-
-chamfer cuda:
-```bash
-cd ~/DeFlow/assets/cuda/chamfer3Dlib
-python ./setup.py install
 ```
 
 ## 1. Train
