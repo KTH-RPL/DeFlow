@@ -25,7 +25,7 @@ cd DeFlow && git submodule update --init --recursive
 mamba env create -f assets/environment.yml
 ```
 
-Install mmcv-full: [~30 mins] needed CUDA inside the env, echo ${PATH}
+Install mmcv-full: [~15/30 mins] needed CUDA inside the env, echo ${PATH}
 
 ```bash
 mamba activate deflow
@@ -68,7 +68,7 @@ python 0_preprocess.py --av2_type sensor --data_mode train --argo_dir /home/kin/
 python 0_preprocess.py --av2_type sensor --data_mode val --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
 ```
 
-## Leaderboard Submission
+<!-- ## Leaderboard Submission
 
 You can view Wandb dashboard for the training and evaluation results or run the av2 leaderboard scripts to get official results.
 
@@ -108,7 +108,7 @@ For the av2 leaderboard, we need to follow the official instructions:
     evalai set_token <your token>
     evalai challenge 2010 phase 4018 submit --file <submission_file_path> --large --private
     ```
-4. Check in online eval leaderboard website: [Argoverse 2 Scene Flow](https://eval.ai/web/challenges/challenge-page/2010/leaderboard/4759).
+4. Check in online eval leaderboard website: [Argoverse 2 Scene Flow](https://eval.ai/web/challenges/challenge-page/2010/leaderboard/4759). -->
 
 
 

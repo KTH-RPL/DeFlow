@@ -1,7 +1,7 @@
 DeFlow 
 ---
 
-[![arXiv](https://img.shields.io/badge/arXiv-TODO.TODO-b31b1b.svg)](https://arxiv.org/abs/TODO.TODO) 
+[![arXiv](https://img.shields.io/badge/arXiv-2401.16122-b31b1b.svg)](https://arxiv.org/abs/2401.16122) 
 Will present in ICRA'24.
 
 Task: Scene Flow Estimation in Autonomous Driving
@@ -17,7 +17,7 @@ https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a4
 
 ## 0. Setup
 
-**Environment**: Clone the repo and build the environment, check [detail installation](assets/README.md) for more information.
+**Environment**: Clone the repo and build the environment, check [detail installation](assets/README.md) for more information. [Conda](https://docs.conda.io/projects/miniconda/en/latest/)/[Mamba](https://github.com/mamba-org/mamba) is recommended.
 ```
 git clone https://github.com/KTH-RPL/DeFlow
 cd DeFlow
@@ -36,6 +36,7 @@ Download tips in [assets/README.md](assets/README.md#dataset-download)
 
 ### Prepare Data
 
+Normally need 10-45 mins finished run following commands totally (my computer 15 mins, our cluster 40 mins).
 ```bash
 python 0_preprocess.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
 python 0_preprocess.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
@@ -46,7 +47,7 @@ python 0_preprocess.py --av2_type sensor --data_mode test --mask_dir /home/kin/d
 
 All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in our experiments.
 
-Best fine-tuned model train with following command by other default config in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml):
+Best fine-tuned model train with following command by other default config in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml), if you will set wandb_mode=online, maybe change all `entity="kth-rpl"` to your own account name.
 ```bash
 python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 ```
@@ -60,6 +61,8 @@ python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 python 2_eval.py model=nsfp 
 python 2_eval.py model=fast_nsfp
 ```
+
+To help community benchmarking, we provide our weights including fastflow3d, deflow [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
 
 ## 2. Evaluation
 
@@ -110,13 +113,13 @@ Note: ego_motion already compensated, so the visualization is more clear.
 
 ```
 @article{zhang2024deflow,
-  author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
-  title={DeFlow: TB},
-  journal={arXiv preprint arXiv:todo.todo},
+  author={Zhang, Qingwen and Yang, Yi and Peizheng, Li and Olov, Andersson and Jensfelt, Patric},
+  title={DeFlow: Decoder of Scene Flow Network in Autonomous Driving},
+  journal={arXiv preprint arXiv:2401.16122},
   year={2024}
 }
 ```
 
 This implementation is based on codes from several repositories. Thanks for these authors who kindly open-sourcing their work to the community. Please see our paper reference part to get more information.
 
-❤️: [ZeroFlow](https://github.com/kylevedder/zeroflow), [NSFP](https://github.com/Lilac-Lee/Neural_Scene_Flow_Prior), [FastNSF](https://github.com/Lilac-Lee/FastNSF)
+❤️: [ZeroFlow](https://github.com/kylevedder/zeroflow), [NSFP](https://github.com/Lilac-Lee/Neural_Scene_Flow_Prior), [FastNSF](https://github.com/Lilac-Lee/FastNSF). Others good code style and tools: [forecast-mae](https://github.com/jchengai/forecast-mae), [kiss-icp](https://github.com/PRBonn/kiss-icp)
