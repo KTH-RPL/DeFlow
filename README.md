@@ -114,7 +114,7 @@ Note: ego_motion already compensated, so the visualization is more clear.
 
 ```
 @article{zhang2024deflow,
-  author={Zhang, Qingwen and Yang, Yi and Peizheng, Li and Olov, Andersson and Jensfelt, Patric},
+  author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
   title={DeFlow: Decoder of Scene Flow Network in Autonomous Driving},
   journal={arXiv preprint arXiv:2401.16122},
   year={2024}
