@@ -1,10 +1,11 @@
 DeFlow 
 ---
 
-[![arXiv](https://img.shields.io/badge/arXiv-2401.16122-b31b1b.svg)](https://arxiv.org/abs/2401.16122) 
+[![arXiv](https://img.shields.io/badge/arXiv-2401.16122-b31b1b.svg)](https://arxiv.org/abs/2401.16122) [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/deflow-decoder-of-scene-flow-network-in/scene-flow-estimation-on-argoverse-2)](https://paperswithcode.com/sota/scene-flow-estimation-on-argoverse-2?p=deflow-decoder-of-scene-flow-network-in) [poster coming soon] [video coming soon]
+
 Will present in ICRA'24.
 
-Task: Scene Flow Estimation in Autonomous Driving
+Task: Scene Flow Estimation in Autonomous Driving. Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). Check usage in [2. Evaluation](#2-evaluation).
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a478b938
 
