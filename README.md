@@ -5,7 +5,7 @@ DeFlow
 
 Will present in ICRA'24.
 
-Task: Scene Flow Estimation in Autonomous Driving. Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). Check usage in [2. Evaluation](#2-evaluation).
+Task: Scene Flow Estimation in Autonomous Driving. Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/15581af1-3066-4865-bf72-1242a478b938
 
@@ -69,12 +69,15 @@ To help community benchmarking, we provide our weights including fastflow3d, def
 
 You can view Wandb dashboard for the training and evaluation results or [run/submit to av2 leaderboard to get official results](assets/README.md#leaderboard-submission).
 
-Since in training, we save all hyper-parameters and model checkpoints, so the only things you need to do is to specify the checkpoint path. Remember to set data path correctly also.
+Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
-python 2_eval.py checkpoint=/home/kin/model.ckpt
+python 2_eval.py checkpoint=/home/kin/model.ckpt av2_mode=val # it will directly prints all metric
+python 2_eval.py checkpoint=/home/kin/model.ckpt av2_mode=test # it will output the av2_submit.zip for you to submit to leaderboard
 ```
 
-Submit to Online Leaderboard, the last step will tell you the result path, copy it here:
+Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
+
+To submit to the Online Leaderboard, the last step will tell you the resulting path, copy it here:
 ```bash
 # you will find there is a av2_submit.zip in the folder now. since the env is different and conflict we set new one:
 mamba create -n py37 python=3.7
@@ -121,6 +124,6 @@ Note: ego_motion already compensated, so the visualization is more clear.
 }
 ```
 
-This implementation is based on codes from several repositories. Thanks for these authors who kindly open-sourcing their work to the community. Please see our paper reference part to get more information.
+This implementation is based on codes from several repositories. Thanks to these authors who kindly open-sourcing their work to the community. Please see our paper reference part to get more information. Thanks to Kyle Vedder (ZeroFlow) who kindly discussed their results with us and HKUST Ramlab's member: Jin Wu who gave constructive comments on this work. The computations were enabled by the supercomputing resource Berzelius provided by National Supercomputer Centre at Linköping University and the Knut and Alice Wallenberg Foundation, Sweden.
 
 ❤️: [ZeroFlow](https://github.com/kylevedder/zeroflow), [NSFP](https://github.com/Lilac-Lee/Neural_Scene_Flow_Prior), [FastNSF](https://github.com/Lilac-Lee/FastNSF). Others good code style and tools: [forecast-mae](https://github.com/jchengai/forecast-mae), [kiss-icp](https://github.com/PRBonn/kiss-icp)
