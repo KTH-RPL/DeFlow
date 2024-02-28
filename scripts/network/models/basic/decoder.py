@@ -144,7 +144,7 @@ class ConvGRUDecoder(nn.Module):
 
         self.offset_encoder = nn.Linear(3, 64)
 
-        # FIXME: not sure which one should be hidden or input?
+        # NOTE: voxel feature is hidden input, point offset is input, check paper's Fig. 3
         self.gru = ConvGRU(input_dim=64, hidden_dim=pseudoimage_channels*2)
 
         self.decoder = nn.Sequential(
@@ -175,7 +175,6 @@ class ConvGRUDecoder(nn.Module):
         # [N, 128] -> [N, 128, 1]
         concatenated_vectors = concatenated_vectors.unsqueeze(2)
 
-        # FIXME: how many iters?
         for itr in range(self.num_iters):
             concatenated_vectors = self.gru(concatenated_vectors, point_offsets_feature.unsqueeze(2))
 

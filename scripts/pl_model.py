@@ -25,7 +25,6 @@ import os, sys, time, h5py
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 from scripts.utils.mics import import_func, weights_init, zip_res
-from scripts.utils.optim import WarmupCosLR
 from scripts.network.loss_func import evaluate_leaderboard
 from scripts.utils.av2_eval import write_output_file
 from scripts.network.models.basic import cal_pose0to1
@@ -69,12 +68,6 @@ class ModelWrapper(LightningModule):
             self.av2_mode = None
             if cfg.pretrained_weights is not None:
                 self.model.load_from_checkpoint(cfg.pretrained_weights)
-        
-        self.turn_lr_scheduler = False
-        if 'lr_scheduler' in cfg:
-            self.turn_lr_scheduler = cfg.lr_scheduler
-            self.min_lr = cfg.min_lr
-            self.warmup_epochs = max(1, int(self.epochs / 10))
 
         if 'dataset_path' in cfg:
             self.dataset_path = cfg.dataset_path
@@ -228,28 +221,11 @@ class ModelWrapper(LightningModule):
             self.train_validation_step_(batch, res_dict)
 
     def configure_optimizers(self):
-        # optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-
-        # if self.turn_lr_scheduler:
-        #     scheduler = WarmupCosLR(optimizer = optimizer,
-        #                             min_lr = self.min_lr,
-        #                             lr = self.lr,
-        #                             warmup_epochs = self.warmup_epochs,
-        #                             epochs = self.epochs)
-        #     return [optimizer], [scheduler]
-        
-        # return optimizer
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         return optimizer
     
     def on_train_epoch_start(self):
         self.time_start_train_epoch = time.time()
-        # if self.current_epoch < self.warmup_epochs * 2:
-        # if self.current_epoch == 0:
-        #     self.add_seloss.remove('cluster_flow_loss')
-        # else:
-        #     if 'cluster_flow_loss' not in self.add_seloss:
-        #         self.add_seloss.append('cluster_flow_loss')
 
     def on_train_epoch_end(self):
         self.log("pre_epoch_cost (mins)", (time.time()-self.time_start_train_epoch)/60.0, on_step=False, on_epoch=True, sync_dist=True)
