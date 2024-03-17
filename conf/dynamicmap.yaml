@@ -6,13 +6,10 @@ defaults:
 slurm_id: 00000
 
 wandb_mode: offline # [offline, disabled, online]
-dataset_path: /home/kin/data/av2/preprocess/sensor
+dataset_path: /home/kin/data/Dynamic_Papers_assets/Benchmark_data/00
 
 output: ${model.name}-${slurm_id}
-
-checkpoint: /home/kin/model.ckpt
-av2_mode: val # [val, test]
-save_res: False # [True, False]
+checkpoint: /home/kin/model_zoo/deflow.ckpt
 
 # no need to change
 gpus: 1

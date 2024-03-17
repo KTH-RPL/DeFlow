@@ -8,8 +8,6 @@
 
 """
 import torch
-from assets.cuda.chamfer_cuda import nnChamferDis
-MyCUDAChamferDistance = nnChamferDis()
 
 def deflowLoss(res_dict):
     pred = res_dict['est_flow']

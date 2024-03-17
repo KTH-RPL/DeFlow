@@ -55,19 +55,7 @@ class ModelWrapper(LightningModule):
         self.lr = cfg.lr if 'lr' in cfg else None
         self.epochs = cfg.epochs if 'epochs' in cfg else None
         
-        if 'av2_mode' in cfg:
-            self.av2_mode = cfg.av2_mode
-            self.save_res = cfg.save_res
-            self.all_scores = {"EPE_FS": [], "EPE_BS": [], "EPE_Dynamic": [], "EPE_Three": [], "Dynamic_IoU": []}
-            if self.save_res or self.av2_mode == 'test':
-                self.save_res_path = Path(cfg.dataset_path).parent / "results" / cfg.output
-                os.makedirs(self.save_res_path, exist_ok=True)
-                print(f"We are in {cfg.av2_mode}, results will be saved in: {self.save_res_path}")
-            self.load_checkpoint_path = cfg.checkpoint
-        else:
-            self.av2_mode = None
-            if cfg.pretrained_weights is not None:
-                self.model.load_from_checkpoint(cfg.pretrained_weights)
+        self.load_checkpoint_path = cfg.checkpoint
 
         if 'dataset_path' in cfg:
             self.dataset_path = cfg.dataset_path
@@ -229,6 +217,9 @@ class ModelWrapper(LightningModule):
 
     def on_train_epoch_end(self):
         self.log("pre_epoch_cost (mins)", (time.time()-self.time_start_train_epoch)/60.0, on_step=False, on_epoch=True, sync_dist=True)
+    def on_test_epoch_start(self) -> None:
+        # empty N, 3
+        self.clean_map = torch.zeros((0, 3), device=self.device)
 
     def test_step(self, batch, batch_idx):
         # NOTE (Qingwen): again, val and test we only allow batch_size = 1
@@ -240,9 +231,9 @@ class ModelWrapper(LightningModule):
         res_dict = {key: res_dict[key][0] for key in res_dict if len(res_dict[key])>0}
 
         pc0 = batch['origin_pc0']
-        pose_0to1 = cal_pose0to1(batch["pose0"], batch["pose1"])
-        transform_pc0 = pc0 @ pose_0to1[:3, :3].T + pose_0to1[:3, 3]
-        pose_flow = transform_pc0 - pc0
+        # pose_0to1 = cal_pose0to1(batch["pose0"], batch["pose1"])
+        # transform_pc0 = pc0 @ pose_0to1[:3, :3].T + pose_0to1[:3, 3]
+        pose_flow = torch.zeros_like(pc0)
 
         if 'pc0_valid_point_idxes' in res_dict:
             valid_from_pc2res = res_dict['pc0_valid_point_idxes']
@@ -253,23 +244,29 @@ class ModelWrapper(LightningModule):
 
             final_flow = pose_flow.clone()
             final_flow[~batch['gm0']] = pred_flow
-        # else:
-        #     # pose_flow = pose_flows
-        #     # pred_flow_ = res_dict['flow'].cpu().detach()
-        #     # TODO: for other methods.... 
-        #     pred_flow = pose_flows.clone()
 
-        # write final_flow into the dataset.
-        key = str(batch['timestamp'])
-        scene_id = batch['scene_id']
-        with h5py.File(os.path.join(self.dataset_path, f'{scene_id}.h5'), 'r+') as f:
-            if 'flow_est' in f[key]:
-                del f[key]['flow_est']
-            f[key].create_dataset('flow_est', data=final_flow.cpu().detach().numpy().astype(np.float32))
+        # label final_flow >=0.05 as dynamic, 10hz 0.5m/s speed as dynamic
+        dynamic_label = torch.norm(final_flow, dim=1, p=2) >= 0.05
+        
+        # batch['world_pc0'][~dynamic_label]
+        self.clean_map = torch.cat([self.clean_map, batch['world_pc0'][~dynamic_label]], dim=0)
+        # # write final_flow into the dataset.
+        # key = str(batch['timestamp'])
+        # scene_id = batch['scene_id']
+        # with h5py.File(os.path.join(self.dataset_path, f'{scene_id}.h5'), 'r+') as f:
+        #     if 'flow_est' in f[key]:
+        #         del f[key]['flow_est']
+        #     f[key].create_dataset('flow_est', data=final_flow.cpu().detach().numpy().astype(np.float32))
 
     def on_test_epoch_end(self):
+        from scripts.utils.pcdpy3 import save_pcd
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-        print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-        print(f"python tests/scene_flow.py --flow_mode='flow_est' --data_dir={self.dataset_path}")
-        print(f"Enjoy! ^v^ ------ \n")
+        # to numpy 
+        clean_map = self.clean_map.cpu().detach().numpy().astype(np.float32)
+        save_pcd(f"{self.dataset_path}/deflow_output.pcd", clean_map)
+        print(f"Write clean map to the dataset: {self.dataset_path}/deflow_output.pcd. Enjoy! ^v^ ------ \n")
+
+        # print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
+        # print(f"python tests/scene_flow.py --flow_mode='flow_est' --data_dir={self.dataset_path}")
+        # print(f"Enjoy! ^v^ ------ \n")
        

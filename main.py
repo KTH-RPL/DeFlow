@@ -14,13 +14,13 @@ import torch
 from torch.utils.data import DataLoader
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
-from scripts.network.dataloader import HDF5Dataset
+from scripts.network.dataloader import DynamicMapData
 from scripts.pl_model import ModelWrapper
 
-@hydra.main(version_base=None, config_path="conf", config_name="eval")
+@hydra.main(version_base=None, config_path="conf", config_name="dynamicmap")
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
@@ -30,7 +30,7 @@ def main(cfg):
         sys.exit(1)
     
     checkpoint_params = DictConfig(torch.load(cfg.checkpoint)["hyper_parameters"])
-    cfg.output = checkpoint_params.cfg.output + f"-{cfg.av2_mode}"
+    cfg.output = checkpoint_params.cfg.output
     cfg.model.update(checkpoint_params.cfg.model)
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
 
@@ -43,7 +43,7 @@ def main(cfg):
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)
     trainer.test(model = mymodel, \
-                 dataloaders = DataLoader(HDF5Dataset(cfg.dataset_path), batch_size=1, shuffle=False))
+                 dataloaders = DataLoader(DynamicMapData(cfg.dataset_path), batch_size=1, shuffle=False))
     wandb.finish()
 
 if __name__ == "__main__":

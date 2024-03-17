@@ -13,6 +13,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import h5py, os, pickle, argparse
 from tqdm import tqdm
+from scipy.spatial.transform import Rotation as R
+import numpy as np
+from pathlib import Path
 
 def collate_fn_pad(batch):
     # padding the data
@@ -42,6 +45,79 @@ def collate_fn_pad(batch):
         res_dict['ego_motion'] = [batch[i]['ego_motion'] for i in range(len(batch))]
 
     return res_dict
+
+import os, sys
+BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '../..' ))
+sys.path.append(BASE_DIR)
+from scripts.utils import pcdpy3
+from linefit import ground_seg
+def xyzqwxyz_to_matrix(xyzqwxyz: list):
+    """
+    input: xyzqwxyz: [x, y, z, qx, qy, qz, qw] a list of 7 elements
+    """
+    rotation = R.from_quat([xyzqwxyz[3], xyzqwxyz[4], xyzqwxyz[5], xyzqwxyz[6]]).as_matrix()
+    pose = np.eye(4).astype(np.float64)
+    pose[:3, :3] = rotation
+    pose[:3, 3] = xyzqwxyz[:3]
+    return pose
+def inv_pose_matrix(pose):
+    inv_pose = np.eye(4)
+    inv_pose[:3, :3] = pose[:3, :3].T
+    inv_pose[:3, 3] = -pose[:3, :3].T @ pose[:3, 3]
+    return inv_pose
+
+class DynamicMapData(Dataset):
+    def __init__(self, directory):
+        super(DynamicMapData, self).__init__()
+        self.scene_id = directory.split("/")[-1]
+        self.directory = Path(directory) / "pcd"
+        self.pcd_files = [os.path.join(self.directory, f) for f in sorted(os.listdir(self.directory)) if f.endswith('.pcd')]
+
+        # FIXME: ground segmentation config: av2, kitti, semindoor; hard code here
+        if self.scene_id == "av2":
+            ground_config = f"{BASE_DIR}/conf/groundseg/av2.toml"
+        elif self.scene_id == "semindoor":
+            ground_config = f"{BASE_DIR}/conf/groundseg/semindoor.toml"
+        else:
+            ground_config = f"{BASE_DIR}/conf/groundseg/kitti.toml"
+
+        self.groundseg = ground_seg(ground_config)
+
+    def __len__(self):
+        return len(self.pcd_files)
+    
+    def __getitem__(self, index_):
+        res_dict = {
+            'scene_id': self.scene_id,
+            'timestamp': self.pcd_files[index_].split("/")[-1].split(".")[0],
+        }
+        pcd_ = pcdpy3.PointCloud.from_path(self.pcd_files[index_])
+        pc0 = pcd_.np_data[:,:3]
+        pose0 = xyzqwxyz_to_matrix(list(pcd_.viewpoint))
+
+        
+        if index_ + 1 == len(self.pcd_files):
+            index_ = index_ - 2
+        pcd_ = pcdpy3.PointCloud.from_path(self.pcd_files[index_+1])
+        pc1 = pcd_.np_data[:,:3]
+        pose1 = xyzqwxyz_to_matrix(list(pcd_.viewpoint))
+        inv_pose0 = inv_pose_matrix(pose0)
+        ego_pc0 = pc0 @ inv_pose0[:3, :3].T + inv_pose0[:3, 3]
+        gm0 = np.array(self.groundseg.run(ego_pc0[:,:3].tolist()))
+
+        inv_pose1 = inv_pose_matrix(pose1)
+        ego_pc1 = pc1 @ inv_pose1[:3, :3].T + inv_pose1[:3, 3]
+        gm1 = np.array(self.groundseg.run(ego_pc1[:,:3].tolist()))
+
+        res_dict['pc0'] = torch.tensor(ego_pc0.astype(np.float32))
+        res_dict['gm0'] = torch.tensor(gm0.astype(np.bool_))
+        res_dict['pose0'] = torch.tensor(pose0)
+        res_dict['pc1'] = torch.tensor(ego_pc1.astype(np.float32))
+        res_dict['gm1'] = torch.tensor(gm1.astype(np.bool_))
+        res_dict['pose1'] = torch.tensor(pose1)
+        res_dict['world_pc0'] = torch.tensor(pc0.astype(np.float32))
+        return res_dict
+
 class HDF5Dataset(Dataset):
     def __init__(self, directory, eval = False):
         '''
