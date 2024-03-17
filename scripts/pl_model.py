@@ -261,6 +261,7 @@ class ModelWrapper(LightningModule):
     def on_test_epoch_end(self):
         from scripts.utils.pcdpy3 import save_pcd
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
+        self.model.timer.print(random_colors=True, bold=True)
         # to numpy 
         clean_map = self.clean_map.cpu().detach().numpy().astype(np.float32)
         save_pcd(f"{self.dataset_path}/deflow_output.pcd", clean_map)

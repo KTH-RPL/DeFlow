@@ -51,6 +51,7 @@ class DeFlow(nn.Module):
                Detail: [pc0, pc1, pose0, pose1]
         output: the predicted flow, pose_flow, and the valid point index of pc0
         """
+        self.timer[9].start("One Scan")
         self.timer[0].start("Data Preprocess")
         batch_sizes = len(batch["pose0"])
 
@@ -109,4 +110,5 @@ class DeFlow(nn.Module):
             "pc1_valid_point_idxes": pc1_valid_point_idxes,
             "pc1_points_lst": pc1_points_lst,
         }
+        self.timer[9].stop()
         return model_res
