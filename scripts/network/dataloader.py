@@ -55,15 +55,16 @@ def xyzqwxyz_to_matrix(xyzqwxyz: list):
     """
     input: xyzqwxyz: [x, y, z, qx, qy, qz, qw] a list of 7 elements
     """
-    rotation = R.from_quat([xyzqwxyz[3], xyzqwxyz[4], xyzqwxyz[5], xyzqwxyz[6]]).as_matrix()
+    rotation = R.from_quat([xyzqwxyz[4], xyzqwxyz[5], xyzqwxyz[6], xyzqwxyz[3]]).as_matrix()
     pose = np.eye(4).astype(np.float64)
     pose[:3, :3] = rotation
     pose[:3, 3] = xyzqwxyz[:3]
     return pose
+
 def inv_pose_matrix(pose):
     inv_pose = np.eye(4)
     inv_pose[:3, :3] = pose[:3, :3].T
-    inv_pose[:3, 3] = -pose[:3, :3].T @ pose[:3, 3]
+    inv_pose[:3, 3] = -pose[:3, :3].T.dot(pose[:3, 3])
     return inv_pose
 
 class DynamicMapData(Dataset):
@@ -101,8 +102,11 @@ class DynamicMapData(Dataset):
         pcd_ = pcdpy3.PointCloud.from_path(self.pcd_files[index_+1])
         pc1 = pcd_.np_data[:,:3]
         pose1 = xyzqwxyz_to_matrix(list(pcd_.viewpoint))
+
         inv_pose0 = inv_pose_matrix(pose0)
         ego_pc0 = pc0 @ inv_pose0[:3, :3].T + inv_pose0[:3, 3]
+        # pcdpy3.save_pcd(f"{BASE_DIR}/ego_pc0.pcd", ego_pc0)
+        # sys.exit(0)
         gm0 = np.array(self.groundseg.run(ego_pc0[:,:3].tolist()))
 
         inv_pose1 = inv_pose_matrix(pose1)
