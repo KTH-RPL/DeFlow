@@ -17,3 +17,7 @@ cancel.sh
 # slurm log files
 *.err
 *.out
+
+# figure
+*.png
+*.pdf

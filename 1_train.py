@@ -1,7 +1,7 @@
 """
 # Created: 2023-07-12 19:30
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
-# Author: Kin ZHANG  (https://kin-zhang.github.io/)
+# Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
@@ -92,6 +92,7 @@ def main(cfg):
         print("Total Train Dataset Size: ", len(train_dataset))
         print("-"*40+"\n")
 
+    # NOTE(Qingwen): search & check: def training_step(self, batch, batch_idx)
     trainer.fit(model, train_dataloaders = train_loader, val_dataloaders = val_loader, ckpt_path = cfg.checkpoint)
     wandb.finish()
 

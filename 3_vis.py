@@ -1,7 +1,7 @@
 """
 # Created: 2023-12-26 12:41
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
-# Author: Kin ZHANG  (https://kin-zhang.github.io/)
+# Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
@@ -35,8 +35,8 @@ def main(cfg):
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
 
     wandb_logger = WandbLogger(save_dir=output_dir,
-                               entity="hdmaptest",
-                               project=f"sceneflow-eval", 
+                               entity="kth-rpl",
+                               project=f"deflow-eval", 
                                name=f"{cfg.output}",
                                offline=(cfg.wandb_mode == "offline"))
     

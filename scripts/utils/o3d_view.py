@@ -1,7 +1,7 @@
 '''
 # Created: 2023-1-26 16:38
 # Copyright (C) 2022-now, RPL, KTH Royal Institute of Technology
-# Author: Kin ZHANG  (https://kin-zhang.github.io/)
+# Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
