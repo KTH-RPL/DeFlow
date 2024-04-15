@@ -27,12 +27,52 @@ from av2.datasets.sensor.constants import AnnotationCategories
 
 SCENE_FLOW_DYNAMIC_THRESHOLD: Final = 0.05
 SWEEP_PAIR_TIME_DELTA: Final = 0.1
+CLOSE_DISTANCE_THRESHOLD: Final = 35.0
 
 CATEGORY_TO_INDEX: Final = {
     **{"NONE": 0},
     **{k.value: i + 1 for i, k in enumerate(AnnotationCategories)},
 }
-
+# These catagories are ignored because of labeling oddities (moving stop signs on side of school bus, etc)
+ROAD_SIGNS = [
+    "BOLLARD",
+    "CONSTRUCTION_BARREL",
+    "CONSTRUCTION_CONE",
+    "MOBILE_PEDESTRIAN_CROSSING_SIGN",
+    "SIGN",
+    "STOP_SIGN",
+    "MESSAGE_BOARD_TRAILER",
+    "TRAFFIC_LIGHT_TRAILER",
+]
+PEDESTRIAN_CATEGORIES = ["PEDESTRIAN", "STROLLER", "WHEELCHAIR", "OFFICIAL_SIGNALER"]
+WHEELED_VRU = [
+    "BICYCLE",
+    "BICYCLIST",
+    "MOTORCYCLE",
+    "MOTORCYCLIST",
+    "WHEELED_DEVICE",
+    "WHEELED_RIDER",
+]
+CAR = ["REGULAR_VEHICLE"]
+OTHER_VEHICLES = [
+    "BOX_TRUCK",
+    "LARGE_VEHICLE",
+    "RAILED_VEHICLE",
+    "TRUCK",
+    "TRUCK_CAB",
+    "VEHICULAR_TRAILER",
+    "ARTICULATED_BUS",
+    "BUS",
+    "SCHOOL_BUS",
+]
+BACKGROUND_CATEGORIES = ["NONE"] # + ROAD_SIGNS
+BUCKETED_METACATAGORIES = {
+    "BACKGROUND": BACKGROUND_CATEGORIES,
+    "CAR": CAR,
+    "PEDESTRIAN": PEDESTRIAN_CATEGORIES,
+    "WHEELED_VRU": WHEELED_VRU,
+    "OTHER_VEHICLES": OTHER_VEHICLES,
+}
 
 @unique
 class SceneFlowMetricType(str, Enum):
@@ -349,6 +389,16 @@ def compute_segmentation_metrics(
             f"The segmentation metric type {segmentation_metric_type} is not implemented!"
         )
 
+EPS: Final = 1e-6
+def compute_epe(res_dict, indices, eps=1e-8):
+    epe_sum = 0
+    count_sum = 0
+    for index in indices:
+        count = res_dict['Count'][index]
+        if count != 0:
+            epe_sum += res_dict['EPE'][index] * count
+            count_sum += count
+    return epe_sum / (count_sum + eps) if count_sum != 0 else 0.0
 
 def compute_metrics(
     pred_flow: NDArrayFloat,
@@ -358,7 +408,7 @@ def compute_metrics(
     is_dynamic: NDArrayBool,
     is_close: NDArrayBool,
     is_valid: NDArrayBool,
-    metric_categories: Dict[MetricBreakdownCategories, List[int]],
+    # metric_categories: Dict[MetricBreakdownCategories, List[int]],
 ) -> Dict[str, List[Any]]:
     """Compute all the metrics for a given example and package them into a list to be put into a DataFrame.
 
@@ -376,6 +426,7 @@ def compute_metrics(
         A dictionary of columns to create a long-form DataFrame of the results from.
         One row for each subset in the breakdown.
     """
+    metric_categories = FOREGROUND_BACKGROUND_BREAKDOWN
     pred_flow = pred_flow[is_valid].astype(np.float64)
     pred_dynamic = pred_dynamic[is_valid].astype(bool)
     gts = gts[is_valid].astype(np.float64)
@@ -423,7 +474,25 @@ def compute_metrics(
                         results[flow_metric_type] += [np.nan]
                     for seg_metric_type in SegmentationMetricType:
                         results[seg_metric_type] += [0.0]
-    return results
+
+    # reference: eval.py L503: https://github.com/argoverse/av2-api/blob/main/src/av2/evaluation/scene_flow/eval.py
+    # we need Dynamic IoU and EPE 3-Way Average to calculate loss!
+    # weighted: (x[metric_type.value] * x.Count).sum() / total
+    # 'Class': ['Background', 'Background', 'Background', 'Background', 'Foreground', 'Foreground', 'Foreground', 'Foreground']
+    # 'Motion': ['Dynamic', 'Dynamic', 'Static', 'Static', 'Dynamic', 'Dynamic', 'Static', 'Static']
+    # 'Distance': ['Close', 'Far', 'Close', 'Far', 'Close', 'Far', 'Close', 'Far']
+    
+    EPE_Background_Static = compute_epe(results, [2, 3])
+    EPE_Dynamic = compute_epe(results, [4, 5])
+    EPE_Foreground_Static = compute_epe(results, [6, 7])
+    Dynamic_IoU = sum(results['TP']) / (sum(results['TP']) + sum(results['FP']) + sum(results['FN'])+EPS)
+
+    return {
+        'EPE_BS': EPE_Background_Static, 
+        'EPE_FD': EPE_Dynamic, 
+        'EPE_FS': EPE_Foreground_Static, 
+        'IoU': Dynamic_IoU
+    }
 
 
 def evaluate_predictions(
@@ -509,7 +578,6 @@ def get_prediction_from_zipfile(
         else:
             return None
 
-
 def evaluate_directories(annotations_dir: Path, predictions_dir: Path) -> pd.DataFrame:
     """Run the evaluation on predictions and labels saved to disk.
 
@@ -524,7 +592,6 @@ def evaluate_directories(annotations_dir: Path, predictions_dir: Path) -> pd.Dat
         annotations_dir, lambda n: get_prediction_from_directory(n, predictions_dir)
     )
 
-
 def evaluate_zip(annotations_dir: Path, predictions_zip: Path) -> pd.DataFrame:
     """Run the evaluation on predictions and labels saved to disk.
 
@@ -538,7 +605,6 @@ def evaluate_zip(annotations_dir: Path, predictions_zip: Path) -> pd.DataFrame:
     return evaluate_predictions(
         annotations_dir, lambda n: get_prediction_from_zipfile(n, predictions_zip)
     )
-
 
 def results_to_dict(frame: pd.DataFrame) -> Dict[str, float]:
     """Convert a results DataFrame to a dictionary of whole dataset metrics.
@@ -614,7 +680,6 @@ def results_to_dict(frame: pd.DataFrame) -> Dict[str, float]:
     ) / 3
     return output
 
-
 def evaluate(annotations_dir: str, predictions_dir: str) -> Dict[str, float]:
     """Evaluate a set of predictions and print the results.
 
@@ -662,6 +727,35 @@ def write_output_file(
     )
     output.to_feather(output_log_dir / f"{sweep_uuid[1]}.feather")
 
+def write_output_file_v2(
+    flow: NDArrayFloat,
+    is_valid: NDArrayBool,
+    sweep_uuid: Tuple[str, int],
+    output_dir: Path,
+) -> None:
+    """Write an output predictions file in the correct format for submission.
+
+    Args:
+        flow: (N,3) Flow predictions.
+        is_dynamic: (N,) Dynamic segmentation prediction.
+        sweep_uuid: Identifier of the sweep being predicted (log_id, timestamp_ns).
+        output_dir: Top level directory containing all predictions.
+    """
+    output_log_dir = output_dir / sweep_uuid[0]
+    output_log_dir.mkdir(exist_ok=True, parents=True)
+    fx_m = flow[:, 0].astype(np.float16)
+    fy_m = flow[:, 1].astype(np.float16)
+    fz_m = flow[:, 2].astype(np.float16)
+    output = pd.DataFrame(
+        {
+            "is_valid": is_valid,
+            "flow_tx_m": fx_m,
+            "flow_ty_m": fy_m,
+            "flow_tz_m": fz_m,
+        }
+    )
+    output.to_feather(output_log_dir / f"{sweep_uuid[1]}.feather")
+    
 from zipfile import ZipFile
 from torch import BoolTensor
 import torch
@@ -684,3 +778,50 @@ def get_eval_point_mask(sweep_uuid: Tuple[str, int], mask_file: Path) -> BoolTen
         )
 
     return BoolTensor(torch.from_numpy(mask).squeeze())
+
+
+# python >= 3.7
+from dataclasses import dataclass
+@dataclass(frozen=True, eq=True, repr=True)
+class BaseSplitValue:
+    name: str
+    avg_epe: float
+    avg_speed: float
+    speed_thresholds: Tuple[float, float]
+    count: int
+    def __eq__(self, __value: object) -> bool:
+        return hash(self) == hash(__value)
+    
+def compute_bucketed_epe(
+    pred_flow: NDArrayFloat,
+    gt_flow: NDArrayFloat,
+    category_indices: NDArrayInt,
+    is_valid: NDArrayBool,
+):
+    storage_error_matrix = []
+    # bucket_max_speed, num_buckets, distance_thresholds set is from: eval/bucketed_epe.py#L226
+    bucket_edges = np.concatenate([np.linspace(0, 2.0, 51), [np.inf]])
+    speed_thresholds = list(zip(bucket_edges, bucket_edges[1:]))
+
+    gt_speeds = np.linalg.norm(gt_flow, axis=-1)
+    error_flow = np.linalg.norm(pred_flow - gt_flow, axis=-1)
+    # based on each category, compute the epe
+    for cats_name in BUCKETED_METACATAGORIES:
+        selected_classes_ids = [CATEGORY_TO_INDEX[cat] for cat in BUCKETED_METACATAGORIES[cats_name]]
+        cat_mask = np.isin(category_indices, np.array(selected_classes_ids))
+        # since background don't have speed, we just compute the average epe
+        if cats_name == "BACKGROUND":
+            mask = cat_mask & is_valid
+            storage_error_matrix.append(BaseSplitValue(cats_name, error_flow[mask].mean(), gt_speeds[mask].mean(), (0.0, 0.04), mask.sum()))
+            continue
+        for min_speed_threshold, max_speed_threshold in speed_thresholds:
+            speed_mask = (gt_speeds >= min_speed_threshold) & (gt_speeds < max_speed_threshold)
+            mask = cat_mask & speed_mask & is_valid
+            count_pts = mask.sum()
+            if count_pts == 0:
+                continue
+            avg_epe = error_flow[mask].mean()
+            avg_speed = gt_speeds[mask].mean()
+            storage_error_matrix.append(BaseSplitValue(cats_name, avg_epe, avg_speed, (min_speed_threshold, max_speed_threshold), count_pts))
+            
+    return storage_error_matrix

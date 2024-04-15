@@ -13,7 +13,6 @@
 
 import numpy as np
 import torch
-from tabulate import tabulate
 import torch.optim as optim
 from pathlib import Path
 
@@ -25,9 +24,9 @@ import os, sys, time, h5py
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 from scripts.utils.mics import import_func, weights_init, zip_res
-from scripts.network.loss_func import evaluate_leaderboard
 from scripts.utils.av2_eval import write_output_file
 from scripts.network.models.basic import cal_pose0to1
+from scripts.network.official_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
 
 torch.set_float32_matmul_precision('medium')
 class ModelWrapper(LightningModule):
@@ -55,23 +54,28 @@ class ModelWrapper(LightningModule):
         self.lr = cfg.lr if 'lr' in cfg else None
         self.epochs = cfg.epochs if 'epochs' in cfg else None
         
+        self.metrics = OfficialMetrics()
+
+        if 'checkpoint' in cfg:
+            self.load_checkpoint_path = cfg.checkpoint
+
         if 'av2_mode' in cfg:
             self.av2_mode = cfg.av2_mode
             self.save_res = cfg.save_res
-            self.all_scores = {"EPE_FS": [], "EPE_BS": [], "EPE_Dynamic": [], "EPE_Three": [], "Dynamic_IoU": []}
-            if self.save_res or self.av2_mode == 'test':
+            if self.save_res:
                 self.save_res_path = Path(cfg.dataset_path).parent / "results" / cfg.output
                 os.makedirs(self.save_res_path, exist_ok=True)
                 print(f"We are in {cfg.av2_mode}, results will be saved in: {self.save_res_path}")
-            self.load_checkpoint_path = cfg.checkpoint
         else:
             self.av2_mode = None
-            if cfg.pretrained_weights is not None:
-                self.model.load_from_checkpoint(cfg.pretrained_weights)
+            if 'pretrained_weights' in cfg:
+                if cfg.pretrained_weights is not None:
+                    self.model.load_from_checkpoint(cfg.pretrained_weights)
 
         if 'dataset_path' in cfg:
             self.dataset_path = cfg.dataset_path
-        self.add_seloss = cfg.add_seloss if 'add_seloss' in cfg else None
+        if 'res_name' in cfg:
+            self.vis_name = cfg.res_name
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
@@ -112,46 +116,47 @@ class ModelWrapper(LightningModule):
     def train_validation_step_(self, batch, res_dict):
         # means there are ground truth flow so we can evaluate the EPE-3 Way metric
         if batch['flow'][0].shape[0] > 0:
-            metric_name = ["EPE_FS", "EPE_BS", "EPE_Dynamic", "EPE_Three", "Dynamic_IoU"]  # Add more names as needed
-            metric_eval = {name: 0.0 for name in metric_name}
             pose_flows = res_dict['pose_flow']
             for batch_id, gt_flow in enumerate(batch["flow"]):
                 valid_from_pc2res = res_dict['pc0_valid_point_idxes'][batch_id]
                 pose_flow = pose_flows[batch_id][valid_from_pc2res]
-                final_flow_ = pose_flow.clone()
-                
 
-                final_flow_ = final_flow_ + res_dict['flow'][batch_id]
-                EPE_BS, EPE_Dynamic, EPE_FS, Dynamic_IoU \
-                    = evaluate_leaderboard(final_flow_, pose_flow, batch['pc0'][batch_id][valid_from_pc2res], gt_flow[valid_from_pc2res], \
+                final_flow_ = pose_flow.clone() + res_dict['flow'][batch_id]
+                v1_dict= evaluate_leaderboard(final_flow_, pose_flow, batch['pc0'][batch_id][valid_from_pc2res], gt_flow[valid_from_pc2res], \
                                            batch['flow_is_valid'][batch_id][valid_from_pc2res], batch['flow_category_indices'][batch_id][valid_from_pc2res])
-                EPE_Three = (EPE_BS + EPE_Dynamic + EPE_FS)/3.0
-
-                # Ensure the order matches the loss_names list
-                for idx, loss_value in enumerate([EPE_FS, EPE_BS, EPE_Dynamic, EPE_Three, Dynamic_IoU]):  
-                    metric_eval[metric_name[idx]] += loss_value
-
-            for key in metric_eval:
-                metric_eval[key] /= (batch_id + 1.0)
-                self.log(f"val/{key}", metric_eval[key], sync_dist=True, batch_size=self.batch_size)
+                v2_dict = evaluate_leaderboard_v2(final_flow_, pose_flow, batch['pc0'][batch_id][valid_from_pc2res], gt_flow[valid_from_pc2res], \
+                                        batch['flow_is_valid'][batch_id][valid_from_pc2res], batch['flow_category_indices'][batch_id][valid_from_pc2res])
+                
+                self.metrics.step(v1_dict, v2_dict)
         else:
             pass
         
     def on_validation_epoch_end(self):
         self.model.timer.print(random_colors=False, bold=False)
-        if self.av2_mode == 'val':
-            print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-            printed_data = []
-            for key in self.all_scores:
-                printed_data.append([key, np.mean(self.all_scores[key])])
-            print(tabulate(printed_data))
-            
+
         if self.av2_mode == 'test':
             print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
             print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard.")
             output_file = zip_res(self.save_res_path)
             # wandb.log_artifact(output_file)
-        print(f"Check more details parameters and training status in checkpoints")
+            return
+        
+        if self.av2_mode == 'val':
+            print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
+            print(f"More details parameters and training status are in checkpoints")        
+
+        self.metrics.normalize()
+
+        # wandb log things:
+        for key in self.metrics.bucketed:
+            for type_ in 'Static', 'Dynamic':
+                self.log(f"val/{type_}/{key}", self.metrics.bucketed[key][type_])
+        for key in self.metrics.epe_3way:
+            self.log(f"val/{key}", self.metrics.epe_3way[key])
+        
+        self.metrics.print()
+
+        self.metrics = OfficialMetrics()
         
     def eval_only_step_(self, batch, res_dict):
         batch = {key: batch[key][0] for key in batch if len(batch[key])>0}
@@ -179,25 +184,14 @@ class ModelWrapper(LightningModule):
         #     pred_flow = pose_flows.clone()
 
         if self.av2_mode == 'val': # since only val we have ground truth flow to eval
-            metric_name = ["EPE_FS", "EPE_BS", "EPE_Dynamic", "EPE_Three", "Dynamic_IoU"]  # Add more names as needed
-            metric_eval = {name: 0.0 for name in metric_name}
-
             gt_flow = batch["flow"]
-
-            EPE_BS, EPE_Dynamic, EPE_FS, Dynamic_IoU \
-                = evaluate_leaderboard(final_flow[eval_mask], pose_flow[eval_mask], pc0[eval_mask], \
+            v1_dict = evaluate_leaderboard(final_flow[eval_mask], pose_flow[eval_mask], pc0[eval_mask], \
                                        gt_flow[eval_mask], batch['flow_is_valid'][eval_mask], \
                                        batch['flow_category_indices'][eval_mask])
+            v2_dict = evaluate_leaderboard_v2(final_flow[eval_mask], pose_flow[eval_mask], pc0[eval_mask], \
+                                    gt_flow[eval_mask], batch['flow_is_valid'][eval_mask], batch['flow_category_indices'][eval_mask])
             
-            EPE_Three = (EPE_BS + EPE_Dynamic + EPE_FS)/3.0
-
-            # Ensure the order matches the loss_names list
-            for idx, loss_value in enumerate([EPE_FS, EPE_BS, EPE_Dynamic, EPE_Three, Dynamic_IoU]):  
-                metric_eval[metric_name[idx]] += loss_value
-                self.all_scores[metric_name[idx]].append(loss_value)
-
-            for key in metric_eval:
-                self.log(f"val/{key}", metric_eval[key])
+            self.metrics.step(v1_dict, v2_dict)
         
         # NOTE (Qingwen): Since val and test, we will force set batch_size = 1 
         if self.save_res or self.av2_mode == 'test': # test must save data to submit in the online leaderboard.    
@@ -223,13 +217,13 @@ class ModelWrapper(LightningModule):
     def configure_optimizers(self):
         optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         return optimizer
-    
+
     def on_train_epoch_start(self):
         self.time_start_train_epoch = time.time()
 
     def on_train_epoch_end(self):
         self.log("pre_epoch_cost (mins)", (time.time()-self.time_start_train_epoch)/60.0, on_step=False, on_epoch=True, sync_dist=True)
-
+    
     def test_step(self, batch, batch_idx):
         # NOTE (Qingwen): again, val and test we only allow batch_size = 1
         batch['origin_pc0'] = batch['pc0'].clone()
@@ -263,13 +257,12 @@ class ModelWrapper(LightningModule):
         key = str(batch['timestamp'])
         scene_id = batch['scene_id']
         with h5py.File(os.path.join(self.dataset_path, f'{scene_id}.h5'), 'r+') as f:
-            if 'flow_est' in f[key]:
-                del f[key]['flow_est']
-            f[key].create_dataset('flow_est', data=final_flow.cpu().detach().numpy().astype(np.float32))
+            if self.vis_name in f[key]:
+                del f[key][self.vis_name]
+            f[key].create_dataset(self.vis_name, data=final_flow.cpu().detach().numpy().astype(np.float32))
 
     def on_test_epoch_end(self):
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-        print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-        print(f"python tests/scene_flow.py --flow_mode='flow_est' --data_dir={self.dataset_path}")
+        print(f"We already write the estimate flow: {self.vis_name} into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
+        print(f"python tests/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
         print(f"Enjoy! ^v^ ------ \n")
-       

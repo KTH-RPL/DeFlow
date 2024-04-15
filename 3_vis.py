@@ -19,8 +19,9 @@ import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
 from scripts.network.dataloader import HDF5Dataset
 from scripts.pl_model import ModelWrapper
+from scripts.utils import bc
 
-@hydra.main(version_base=None, config_path="conf", config_name="eval")
+@hydra.main(version_base=None, config_path="conf", config_name="vis")
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
@@ -28,9 +29,13 @@ def main(cfg):
     if not os.path.exists(cfg.checkpoint):
         print(f"Checkpoint {cfg.checkpoint} does not exist. Need checkpoints for evaluation.")
         sys.exit(1)
-    
+
+    if cfg.res_name is None:
+        cfg.res_name = cfg.checkpoint.split("/")[-1].split(".")[0]
+        print(f"{bc.BOLD}NOTE{bc.ENDC}: res_name is not specified, use {bc.OKBLUE}{cfg.res_name}{bc.ENDC} as default.")
+
     checkpoint_params = DictConfig(torch.load(cfg.checkpoint)["hyper_parameters"])
-    cfg.output = checkpoint_params.cfg.output + f"-{cfg.av2_mode}"
+    cfg.output = checkpoint_params.cfg.output
     cfg.model.update(checkpoint_params.cfg.model)
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
 
@@ -38,7 +43,7 @@ def main(cfg):
                                entity="kth-rpl",
                                project=f"deflow-eval", 
                                name=f"{cfg.output}",
-                               offline=(cfg.wandb_mode == "offline"))
+                               offline=True)
     
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)

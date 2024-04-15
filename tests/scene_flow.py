@@ -26,7 +26,7 @@ def vis(
     import open3d as o3d
     from scripts.utils.o3d_view import ViewControl, color_map
 
-    dataset = HDF5Data(data_dir, flow_view=True)
+    dataset = HDF5Data(data_dir, flow_view=True, vis_flow=flow_mode)
     
     viz = o3d.visualization.VisualizerWithKeyCallback()
     viz.create_window(window_name=f"view {'ground truth flow' if flow_mode == 'flow' else 'result flow'}, press n for next frame")
@@ -80,9 +80,10 @@ def vis(
 
     myThread = thread()
     myThread.next_frame(viz)
+    # viz.register_animation_callback(myThread.next_frame)
+
     # click 'N' to next frame
-    # viz.register_key_callback(ord('N'), myThread.next_frame)
-    viz.register_animation_callback(myThread.next_frame)
+    viz.register_key_callback(ord('N'), myThread.next_frame)
     viz.run()
     viz.destroy_window()
 

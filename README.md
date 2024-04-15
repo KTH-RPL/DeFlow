@@ -21,7 +21,7 @@ Task: Scene Flow Estimation in Autonomous Driving. Pre-trained weights for model
 
 **Environment**: Clone the repo and build the environment, check [detail installation](assets/README.md) for more information. [Conda](https://docs.conda.io/projects/miniconda/en/latest/)/[Mamba](https://github.com/mamba-org/mamba) is recommended.
 ```
-git clone https://github.com/KTH-RPL/DeFlow
+git clone --recursive https://github.com/KTH-RPL/DeFlow.git
 cd DeFlow
 mamba env create -f environment.yaml
 ```
@@ -100,14 +100,14 @@ We provide a script to visualize the results of the model. You can specify the c
 python 3_vis.py checkpoint=/home/kin/model.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
 # Then terminal will tell you the command you need run. For example here is the output of the above:
-Model: DeFlow, Checkpoint from: /logs/wandb/deflow-10078447/checkpoints/epoch_35_seflow.ckpt
-We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
-python tests/scene_flow.py --flow_mode='flow_est' --data_dir=/home/kin/data/av2/preprocess/sensor/vis
+Model: DeFlow, Checkpoint from: /home/kin/model_zoo/deflow.ckpt
+We already write the estimate flow: deflow into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
+python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 Enjoy! ^v^ ------ 
 
 
 # Then run the test with changed flow_mode between estimate and gt [flow_est, flow]
-python tests/scene_flow.py --flow_mode='flow_est' --data_dir=/home/kin/data/av2/preprocess/sensor/vis
+python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 ```
 
 Note: ego_motion already compensated, so the visualization is more clear.
