@@ -44,7 +44,7 @@ CATEGORY_TO_INDEX: Final = {
 def create_reading_index(data_dir: Path):
     start_time = time.time()
     data_index = []
-    for file_name in tqdm(os.listdir(data_dir)):
+    for file_name in tqdm(os.listdir(data_dir), ncols=100, desc='Create reading index'):
         if not file_name.endswith(".h5"):
             continue
         scene_id = file_name.split(".")[0]
@@ -212,12 +212,12 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
                         for file in os.listdir(data_dir / log_id / "sensors/lidar")
                         if file.endswith('.feather')])
 
-    if n is not None:
-        iter_bar = tqdm(zip(timestamps, timestamps[1:]), leave=False,
-                         total=len(timestamps) - 1, position=n,
-                         desc=f'Log {log_id}')
-    else:
-        iter_bar = zip(timestamps, timestamps[1:])
+    # if n is not None:
+    #     iter_bar = tqdm(zip(timestamps, timestamps[1:]), leave=False,
+    #                      total=len(timestamps) - 1, position=n,
+    #                      desc=f'Log {log_id}')
+    # else:
+    #     iter_bar = zip(timestamps, timestamps[1:])
 
     with h5py.File(output_dir/f'{log_id}.h5', 'a') as f:
         for cnt, ts0 in enumerate(timestamps):
@@ -254,17 +254,17 @@ def process_logs(data_dir: Path, output_dir: Path, nproc: int):
     # NOTE(Qingwen): if you don't want to all data_dir, then change here: logs = logs[:10] only 10 scene.
     logs = os.listdir(data_dir)
     args = sorted([(data_dir, log, output_dir) for log in logs])
-    print(f'Using {nproc} processes')
+    print(f'Using {nproc} processes to process data: {data_dir} to .h5 format. (#scenes: {len(args)})')
     # for debug
     # for x in tqdm(args):
     #     proc(x, ignore_current_process=True)
     #     break
     if nproc <= 1:
-        for x in tqdm(args):
+        for x in tqdm(args, ncols=120):
             proc(x, ignore_current_process=True)
     else:
         with Pool(processes=nproc) as p:
-            res = list(tqdm(p.imap_unordered(proc, args), total=len(logs)))
+            res = list(tqdm(p.imap_unordered(proc, args), total=len(logs), ncols=120))
 
 def main(
     argo_dir: str = "/home/kin/data/av2",

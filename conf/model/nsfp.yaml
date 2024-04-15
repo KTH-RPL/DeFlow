@@ -10,5 +10,5 @@ target:
   min_delta: 5e-5
   point_cloud_range: ${point_cloud_range}
   
-val_monitor: val/EPE_Three
+val_monitor: val/Three-way
 is_trainable: False

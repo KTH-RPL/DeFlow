@@ -1,6 +1,57 @@
 DeFlow Assets
 ---
 
+There are two ways to setup the environment: conda in your desktop and docker container isolate environment.
+
+## Docker Environment
+
+### Build Docker Image
+If you want to build docker with compile all things inside, there are some things need setup first in your own desktop environment: 
+- [NVIDIA-driver](https://www.nvidia.com/download/index.aspx): which I believe most of people may already have it. Try `nvidia-smi` to check if you have it.
+- [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
+   ```bash
+   # Add Docker's official GPG key:
+   sudo apt-get update
+   sudo apt-get install ca-certificates curl
+   sudo install -m 0755 -d /etc/apt/keyrings
+   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+   sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+   # Add the repository to Apt sources:
+   echo \
+   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+   sudo apt-get update
+   ```
+- [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
+   ```bash
+   sudo apt update && apt install nvidia-container-toolkit
+   ```
+
+Then follow [this stackoverflow answers](https://stackoverflow.com/questions/59691207/docker-build-with-nvidia-runtime):
+1. Edit/create the /etc/docker/daemon.json with content:
+   ```bash
+   {
+      "runtimes": {
+         "nvidia": {
+               "path": "/usr/bin/nvidia-container-runtime",
+               "runtimeArgs": []
+            } 
+      },
+      "default-runtime": "nvidia" 
+   }
+   ```
+2. Restart docker daemon:
+   ```bash
+   sudo systemctl restart docker
+   ```
+
+3. Then you can build the docker image:
+   ```bash
+   cd DeFlow && docker build -t zhangkin/deflow .
+   ```
+   
 ## Installation
 
 We will use conda to manage the environment with mamba for faster package installation.
@@ -41,77 +92,6 @@ python -c "import lightning.pytorch as pl"
 python -c "from mmcv.ops import Voxelization, DynamicScatter;print('success test on mmcv package')"
 ```
 
-## Dataset Download
-
-We will note down the dataset download and itself detail here.
-
-### Download
-
-Since we focus on large point cloud dataset in autonomous driving, we choose Argoverse 2 for our dataset, you can also easily process other driving dataset in this framework. References: [3d_scene_flow user guide](https://argoverse.github.io/user-guide/tasks/3d_scene_flow.html), [Online Leaderboard](https://eval.ai/web/challenges/challenge-page/2010/evaluation).
-
-```bash
-# train is really big (750): totally 966 GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/train/*" sensor/train
-
-# val (150) and test (150): totally 168GB + 168GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/val/*" sensor/val
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" sensor/test
-
-# for local and online eval mask from official repo
-s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
-```
-
-Then to quickly pre-process the data, we can run the following command to generate the pre-processed data for training and evaluation. This will take around 2 hour for the whole dataset (train & val) based on how powerful your CPU is.
-
-```bash
-python 0_preprocess.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
-python 0_preprocess.py --av2_type sensor --data_mode val --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
-```
-
-<!-- ## Leaderboard Submission
-
-You can view Wandb dashboard for the training and evaluation results or run the av2 leaderboard scripts to get official results.
-
-### Local Eval
-For the av2 leaderboard, we need to follow the official instructions:
-
-1. Download the mask file for 3D scene flow task
-    ```bash
-    s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
-    ```
-2. `make_annotation_files.py`
-    ```
-    python3 av2-api/src/av2/evaluation/scene_flow/make_annotation_files.py /home/kin/data/av2/3d_scene_flow/eval /home/kin/data /home/kin/data/av2/3d_scene_flow/val-masks.zip --split val
-    ```
-3. `eval.py` computes all leaderboard metrics.
-
-
-### Online Eval
-
-1. The directory format should be that in `result_path`:
-    ```
-    - <test_log_1>/
-      - <test_timestamp_ns_1>.feather
-      - <test_timestamp_ns_2>.feather
-      - ...
-    - <test_log_2>/
-    - ...
-    ```
-
-2. Run `make_submission_archive.py` to make the zip file for submission.
-    ```
-    python av2-api/src/av2/evaluation/scene_flow/make_submission_archive.py checkpoints/results/test/example /home/kin/data/av2/av2_3d_scene_flow/test-masks.zip --output_filename sub_example.zip
-    ```
-
-3. Submit on the website more commands on [EvalAI-CLI](https://cli.eval.ai/). Normally, one file may be around 1GB, so you need to use `--large` flag.
-    ```
-    evalai set_token <your token>
-    evalai challenge 2010 phase 4018 submit --file <submission_file_path> --large --private
-    ```
-4. Check in online eval leaderboard website: [Argoverse 2 Scene Flow](https://eval.ai/web/challenges/challenge-page/2010/leaderboard/4759). -->
-
-
-
 
 ### Other issues
 
@@ -128,12 +108,12 @@ For the av2 leaderboard, we need to follow the official instructions:
     Solved by `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/proj/berzelius-2023-154/users/x_qinzh/mambaforge/lib`
 
 
-<!-- 
+## Contribute
 
+If you want to contribute to new model, here are tips you can follow:
+1. Dataloader: we believe all data could be process to `.h5`, we named as different scene and inside a scene, the key of each data is timestamp.
+2. Model: All model files can be found [here: scripts/network/models](../scripts/network/models). You can view deflow and fastflow3d to know how to implement a new model.
+3. Loss: All loss files can be found [here: scripts/network/loss_func.py](../scripts/network/loss_func.py). There are three loss functions already inside the file, you can add a new one following the same pattern.
+4. Training: Once you have implemented the model, you can add the model to the config file [here: conf/model](../conf/model) and train the model using the command `python 1_train.py model=your_model_name`. One more note here may: if your res_dict from model output is different, you may need add one pattern in `def training_step` and `def validation_step`.
 
-COMMANDS FOR Berzelius to copy
-
-python 3_vis.py checkpoint=/proj/berzelius-2023-154/users/x_qinzh/workspace/deflow/logs/wandb/deflow-10078447/checkpoints/epoch_35_seflow.ckpt datasetpath=/proj/berzelius-2023-154/users/x_qinzh/av2/preprocess/sensor/mini
-
-python tests/scene_flow.py --flow_mode='flow_est' --data_dir=/proj/berzelius-2023-154/users/x_qinzh/av2/preprocess/sensor/mini
--->
+All others like eval and vis will be changed according to the model you implemented as you follow the above steps.

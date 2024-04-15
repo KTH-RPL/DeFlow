@@ -8,13 +8,19 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 
 Will present in ICRA'24.
 
-Task: Scene Flow Estimation in Autonomous Driving. Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
+Task: Scene Flow Estimation in Autonomous Driving. 
+Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
+Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
 
-- `0_preprocess.py` : pre-process data before training to speed up the whole training time.
+- `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
+  [Dataset we included now: Argoverse 2, more on the way: Waymo and Nuscenes, custom data.]
+  
 - `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
+
 - `2_eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
+
 - `3_vis.py` : For visualization of the results with a video.
 
 ## 0. Setup
@@ -32,17 +38,27 @@ mamba activate deflow
 cd ~/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install -e .
 ```
 
+Or another environment setup choice is [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment, you can pull it by. 
+If you have different arch, please build it by yourself `cd DeFlow && docker build -t zhangkin/deflow` by going through [build-docker-image](assets/README.md/#build-docker-image) section.
+```bash
+# option 1: pull from docker hub
+docker pull zhangkin/deflow
+
+# run container
+docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data --name deflow zhangkin/deflow /bin/zsh
+```
+
 ## 1. Train
 
-Download tips in [assets/README.md](assets/README.md#dataset-download)
+Download tips in [dataprocess/README.md](dataprocess/README.md#argoverse-20)
 
 ### Prepare Data
 
 Normally need 10-45 mins finished run following commands totally (my computer 15 mins, our cluster 40 mins).
 ```bash
-python 0_preprocess.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
-python 0_preprocess.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
-python 0_preprocess.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
+python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
+python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
+python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
 ```
 
 ### Train Model
@@ -105,8 +121,7 @@ We already write the estimate flow: deflow into the dataset, please run followin
 python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 Enjoy! ^v^ ------ 
 
-
-# Then run the test with changed flow_mode between estimate and gt [flow_est, flow]
+# Then run the command in the terminal:
 python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 ```
 

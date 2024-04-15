@@ -234,13 +234,13 @@ def flow_to_rgb(
 
 
 class HDF5Data:
-    def __init__(self, directory, flow_view=False, vis_flow="flow"):
+    def __init__(self, directory, flow_view=False, vis_name="flow"):
         '''
         directory: the directory of the dataset
         t_x: how many past frames we want to extract
         '''
         self.flow_view = flow_view
-        self.vis_flow = vis_flow
+        self.vis_name = vis_name
         self.directory = directory
         with open(os.path.join(self.directory, 'index_total.pkl'), 'rb') as f:
             self.data_index = pickle.load(f)
@@ -287,7 +287,7 @@ class HDF5Data:
                 label = f[key]['label'][:]
 
             if self.flow_view:
-                flow = f[key][self.vis_flow][:]
+                flow = f[key][self.vis_name][:]
                 next_timestamp = str(self.data_index[index+1][1])
                 pose1 = f[next_timestamp]['pose'][:]
         
@@ -301,7 +301,7 @@ class HDF5Data:
         }
         
         if self.flow_view:
-            data_dict[self.vis_flow] = flow
+            data_dict[self.vis_name] = flow
             data_dict['pose1'] = pose1
             
         return data_dict
