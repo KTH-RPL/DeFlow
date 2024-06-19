@@ -7,7 +7,7 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 [![video](https://img.shields.io/badge/video-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/bZ4uUv0nDa0)
 
 Task: Scene Flow Estimation in Autonomous Driving. 
-Pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12173874) or [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
@@ -84,10 +84,15 @@ To help community benchmarking, we provide our weights including fastflow3d, def
 
 You can view Wandb dashboard for the training and evaluation results or [run/submit to av2 leaderboard to get official results](assets/README.md#leaderboard-submission).
 
+
+
 Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
-python 2_eval.py checkpoint=/home/kin/model.ckpt av2_mode=val # it will directly prints all metric
-python 2_eval.py checkpoint=/home/kin/model.ckpt av2_mode=test # it will output the av2_submit.zip for you to submit to leaderboard
+# downloaded pre-trained weight, or train by yourself
+wget https://zenodo.org/records/12173874/files/deflow_best.ckpt
+
+python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
+python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test # it will output the av2_submit.zip for you to submit to leaderboard
 ```
 
 Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
@@ -111,16 +116,19 @@ evalai challenge 2010 phase 4018 submit --file av2_submit.zip --large --private
 We provide a script to visualize the results of the model. You can specify the checkpoint path and the data path to visualize the results. The step is quickly similar to evaluation.
 
 ```bash
-python 3_vis.py checkpoint=/home/kin/model.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
+# downloaded pre-trained weight, or train by yourself
+wget https://zenodo.org/records/12173874/files/deflow_best.ckpt
+
+python 3_vis.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
 # Then terminal will tell you the command you need run. For example here is the output of the above:
-Model: DeFlow, Checkpoint from: /home/kin/model_zoo/deflow.ckpt
-We already write the estimate flow: deflow into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
-python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+Model: DeFlow, Checkpoint from: /home/kin/deflow_best.ckpt
+We already write the estimate flow: deflow_best into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
+python tests/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 Enjoy! ^v^ ------ 
 
 # Then run the command in the terminal:
-python tests/scene_flow.py --flow_mode 'deflow' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tests/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 ```
 
 Note: ego_motion already compensated, so the visualization is more clear.
