@@ -276,34 +276,23 @@ class HDF5Data:
             scene_id, timestamp = self.data_index[index]
 
         key = str(timestamp)
-        with h5py.File(os.path.join(self.directory, f'{scene_id}.h5'), 'r') as f:
-            # original data
-            pc0 = f[key]['lidar'][:]
-            gm0 = f[key]['ground_mask'][:]
-            pose0 = f[key]['pose'][:]
-
-            label = None
-            if 'label' in f[key]:
-                label = f[key]['label'][:]
-
-            if self.flow_view:
-                flow = f[key][self.vis_name][:]
-                next_timestamp = str(self.data_index[index+1][1])
-                pose1 = f[next_timestamp]['pose'][:]
-        
         data_dict = {
             'scene_id': scene_id,
             'timestamp': timestamp,
-            'pc0': pc0,
-            'gm0': gm0,
-            'pose0': pose0,
-            'label': label,
         }
-        
-        if self.flow_view:
-            data_dict[self.vis_name] = flow
-            data_dict['pose1'] = pose1
-            
+        with h5py.File(os.path.join(self.directory, f'{scene_id}.h5'), 'r') as f:
+            # original data
+            data_dict['pc0'] = f[key]['lidar'][:]
+            data_dict['gm0'] = f[key]['ground_mask'][:]
+            data_dict['pose0'] = f[key]['pose'][:]
+
+            if self.flow_view:
+                data_dict[self.vis_name] = f[key][self.vis_name][:]
+                next_timestamp = str(self.data_index[index+1][1])
+                data_dict['pose1'] = f[next_timestamp]['pose'][:]
+                data_dict['pc1'] = f[next_timestamp]['lidar'][:]
+                data_dict['gm1'] = f[next_timestamp]['ground_mask'][:]
+
         return data_dict
     
 from av2.geometry.se3 import SE3
