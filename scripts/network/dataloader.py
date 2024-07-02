@@ -43,7 +43,7 @@ def collate_fn_pad(batch):
 
     return res_dict
 class HDF5Dataset(Dataset):
-    def __init__(self, directory, eval = False):
+    def __init__(self, directory, eval = False, leaderboard_version=1):
         '''
         directory: the directory of the dataset
         eval: if True, use the eval index
@@ -56,10 +56,14 @@ class HDF5Dataset(Dataset):
 
         self.eval_index = False
         if eval:
-            if not os.path.exists(os.path.join(self.directory, 'index_eval.pkl')):
+            index_file_name = 'index_eval.pkl'
+            if leaderboard_version == 2:
+                print("Using index to leaderboard version 2!!")
+                index_file_name = 'index_eval_v2.pkl'
+            if not os.path.exists(os.path.join(self.directory, index_file_name)):
                 raise Exception(f"No eval index file found! Please check {self.directory}")
             self.eval_index = eval
-            with open(os.path.join(self.directory, 'index_eval.pkl'), 'rb') as f:
+            with open(os.path.join(self.directory, index_file_name), 'rb') as f:
                 self.eval_data_index = pickle.load(f)
                 
         self.scene_id_bounds = {}  # 存储每个scene_id的最大最小timestamp和位置
@@ -140,9 +144,9 @@ class HDF5Dataset(Dataset):
                 res_dict['ego_motion'] = ego_motion
 
             if self.eval_index:
-                eval_mask = torch.tensor(f[key]['eval_mask'][:])
+                # looks like v2 not follow the same rule as v1 with eval_mask provided
+                eval_mask = torch.tensor(f[key]['eval_mask'][:]) if 'eval_mask' in f[key] else torch.ones_like(pc0[:, 0], dtype=torch.bool)
                 res_dict['eval_mask'] = eval_mask
-
         return res_dict
 
 if __name__ == "__main__":

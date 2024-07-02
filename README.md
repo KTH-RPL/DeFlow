@@ -7,6 +7,9 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 [![video](https://img.shields.io/badge/video-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/bZ4uUv0nDa0)
 
 Task: Scene Flow Estimation in Autonomous Driving. 
+
+🔥 2024/07/02: Check the self-supervised version in our new ECCV'24 [SeFlow](https://github.com/KTH-RPL/SeFlow). The 1st ranking in new leaderboard among self-supervise methods.
+
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12173874) or [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
@@ -72,10 +75,6 @@ Benchmarking and baseline methods:
 ```bash
 python 1_train.py model=fastflow3d lr=2e-6 epochs=50 batch_size=16
 python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
-
-# for nsfp no need train but optimize iteration running
-python 2_eval.py model=nsfp 
-python 2_eval.py model=fast_nsfp
 ```
 
 To help community benchmarking, we provide our weights including fastflow3d, deflow [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
@@ -92,23 +91,28 @@ Since in training, we save all hyper-parameters and model checkpoints, the only 
 wget https://zenodo.org/records/12173874/files/deflow_best.ckpt
 
 python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
-python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test # it will output the av2_submit.zip for you to submit to leaderboard
+# it will output the av2_submit.zip or av2_submit_v2.zip for you to submit to leaderboard
+python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=1
+python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=2
 ```
 
 Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
 
-To submit to the Online Leaderboard, the last step will tell you the resulting path, copy it here:
+To submit to the Online Leaderboard, if you select `av2_mode=test`, it should be a zip file for you to submit to the leaderboard.
+Note: The leaderboard result in DeFlow main paper is [version 1](https://eval.ai/web/challenges/challenge-page/2010/evaluation), as [version 2](https://eval.ai/web/challenges/challenge-page/2210/overview) is updated after DeFlow paper.
+
 ```bash
-# you will find there is a av2_submit.zip in the folder now. since the env is different and conflict we set new one:
+# since the env may conflict we set new on deflow, we directly create new one:
 mamba create -n py37 python=3.7
 mamba activate py37
 pip install "evalai"
 
 # Step 2: login in eval and register your team
-evalai set_token <your token>
+evalai set-token <your token>
 
 # Step 3: Submit to leaderboard
 evalai challenge 2010 phase 4018 submit --file av2_submit.zip --large --private
+evalai challenge 2210 phase 4396 submit --file av2_submit_v2.zip --large --private
 ```
 
 ## 3. Visualization

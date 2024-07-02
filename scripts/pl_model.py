@@ -56,26 +56,29 @@ class ModelWrapper(LightningModule):
         
         self.metrics = OfficialMetrics()
 
-        if 'checkpoint' in cfg:
-            self.load_checkpoint_path = cfg.checkpoint
+        self.load_checkpoint_path = cfg.checkpoint if 'checkpoint' in cfg else None
 
+
+        self.leaderboard_version = cfg.leaderboard_version if 'leaderboard_version' in cfg else 1
+        # NOTE(Qingwen): since we have seflow version which is unsupervised, we need to set the flag to false.
+        self.supervised_flag = cfg.supervised_flag if 'supervised_flag' in cfg else True
+        self.save_res = False
         if 'av2_mode' in cfg:
             self.av2_mode = cfg.av2_mode
-            self.save_res = cfg.save_res
-            if self.save_res:
+            self.save_res = cfg.save_res if 'save_res' in cfg else False
+            
+            if self.save_res or self.av2_mode == 'test':
                 self.save_res_path = Path(cfg.dataset_path).parent / "results" / cfg.output
                 os.makedirs(self.save_res_path, exist_ok=True)
-                print(f"We are in {cfg.av2_mode}, results will be saved in: {self.save_res_path}")
+                print(f"We are in {cfg.av2_mode}, results will be saved in: {self.save_res_path} with version: {self.leaderboard_version} format for online leaderboard.")
         else:
             self.av2_mode = None
             if 'pretrained_weights' in cfg:
                 if cfg.pretrained_weights is not None:
                     self.model.load_from_checkpoint(cfg.pretrained_weights)
 
-        if 'dataset_path' in cfg:
-            self.dataset_path = cfg.dataset_path
-        if 'res_name' in cfg:
-            self.vis_name = cfg.res_name
+        self.dataset_path = cfg.dataset_path if 'dataset_path' in cfg else None
+        self.vis_name = cfg.res_name if 'res_name' in cfg else 'default'
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
@@ -130,14 +133,24 @@ class ModelWrapper(LightningModule):
                 self.metrics.step(v1_dict, v2_dict)
         else:
             pass
-        
+
+    def configure_optimizers(self):
+        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        return optimizer
+
+    def on_train_epoch_start(self):
+        self.time_start_train_epoch = time.time()
+
+    def on_train_epoch_end(self):
+        self.log("pre_epoch_cost (mins)", (time.time()-self.time_start_train_epoch)/60.0, on_step=False, on_epoch=True, sync_dist=True)
+    
     def on_validation_epoch_end(self):
         self.model.timer.print(random_colors=False, bold=False)
 
         if self.av2_mode == 'test':
             print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-            print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard.")
-            output_file = zip_res(self.save_res_path)
+            print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard. You processed to {self.leaderboard_version} version.")
+            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version)
             # wandb.log_artifact(output_file)
             return
         
@@ -157,31 +170,29 @@ class ModelWrapper(LightningModule):
         self.metrics.print()
 
         self.metrics = OfficialMetrics()
+
+        if self.save_res:
+            print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
+            print(f"python tests/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
+            print(f"Enjoy! ^v^ ------ \n")
         
     def eval_only_step_(self, batch, res_dict):
-        batch = {key: batch[key][0] for key in batch if len(batch[key])>0}
-        res_dict = {key: res_dict[key][0] for key in res_dict if len(res_dict[key])>0}
-
         eval_mask = batch['eval_mask'].squeeze()
         pc0 = batch['origin_pc0']
         pose_0to1 = cal_pose0to1(batch["pose0"], batch["pose1"])
         transform_pc0 = pc0 @ pose_0to1[:3, :3].T + pose_0to1[:3, 3]
         pose_flow = transform_pc0 - pc0
 
+        final_flow = pose_flow.clone()
         if 'pc0_valid_point_idxes' in res_dict:
             valid_from_pc2res = res_dict['pc0_valid_point_idxes']
 
             # flow in the original pc0 coordinate
             pred_flow = pose_flow[~batch['gm0']].clone()
-            pred_flow[valid_from_pc2res] = pose_flow[~batch['gm0']][valid_from_pc2res] + res_dict['flow']
-
-            final_flow = pose_flow.clone()
+            pred_flow[valid_from_pc2res] = res_dict['flow'] + pose_flow[~batch['gm0']][valid_from_pc2res]
             final_flow[~batch['gm0']] = pred_flow
-        # else:
-        #     # pose_flow = pose_flows
-        #     # pred_flow_ = res_dict['flow'].cpu().detach()
-        #     # TODO: for other methods.... 
-        #     pred_flow = pose_flows.clone()
+        else:
+            final_flow[~batch['gm0']] = res_dict['flow'] + pose_flow[~batch['gm0']]
 
         if self.av2_mode == 'val': # since only val we have ground truth flow to eval
             gt_flow = batch["flow"]
@@ -199,45 +210,42 @@ class ModelWrapper(LightningModule):
             rigid_flow = pose_flow[eval_mask, :3].cpu().detach().numpy()
             is_dynamic = np.linalg.norm(save_pred_flow - rigid_flow, axis=1, ord=2) >= 0.05
             sweep_uuid = (batch['scene_id'], batch['timestamp'])
-            write_output_file(save_pred_flow, is_dynamic, sweep_uuid, self.save_res_path)
+            if self.leaderboard_version == 2:
+                save_pred_flow = (final_flow - pose_flow).cpu().detach().numpy() # all points here... since 2rd version we need to save the relative flow.
+            write_output_file(save_pred_flow, is_dynamic, sweep_uuid, self.save_res_path, leaderboard_version=self.leaderboard_version)
 
+    def run_model_wo_ground_data(self, batch):
+        # NOTE (Qingwen): only needed when val or test mode, since train we will go through collate_fn to remove.
+        batch['origin_pc0'] = batch['pc0'].clone()
+        batch['pc0'] = batch['pc0'][~batch['gm0']].unsqueeze(0)
+        batch['pc1'] = batch['pc1'][~batch['gm1']].unsqueeze(0)
+        if 'pcb0' in batch:
+            batch['pcb0'] = batch['pcb0'][~batch['gmb0']].unsqueeze(0)
+        self.model.timer[12].start("One Scan")
+        res_dict = self.model(batch)
+        self.model.timer[12].stop()
+
+        # NOTE (Qingwen): Since val and test, we will force set batch_size = 1 
+        batch = {key: batch[key][0] for key in batch if len(batch[key])>0}
+        res_dict = {key: res_dict[key][0] for key in res_dict if len(res_dict[key])>0}
+        return batch, res_dict
+    
     def validation_step(self, batch, batch_idx):
         if self.av2_mode == 'val' or self.av2_mode == 'test':
-            batch['origin_pc0'] = batch['pc0'].clone()
-            batch['pc0'] = batch['pc0'][~batch['gm0']].unsqueeze(0)
-            batch['pc1'] = batch['pc1'][~batch['gm1']].unsqueeze(0)
-            self.model.timer[12].start("One Scan")
-            res_dict = self.model(batch)
-            self.model.timer[12].stop()
+            batch, res_dict = self.run_model_wo_ground_data(batch)
             self.eval_only_step_(batch, res_dict)
         else:
             res_dict = self.model(batch)
             self.train_validation_step_(batch, res_dict)
 
-    def configure_optimizers(self):
-        optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        return optimizer
-
-    def on_train_epoch_start(self):
-        self.time_start_train_epoch = time.time()
-
-    def on_train_epoch_end(self):
-        self.log("pre_epoch_cost (mins)", (time.time()-self.time_start_train_epoch)/60.0, on_step=False, on_epoch=True, sync_dist=True)
-    
     def test_step(self, batch, batch_idx):
-        # NOTE (Qingwen): again, val and test we only allow batch_size = 1
-        batch['origin_pc0'] = batch['pc0'].clone()
-        batch['pc0'] = batch['pc0'][~batch['gm0']].unsqueeze(0)
-        batch['pc1'] = batch['pc1'][~batch['gm1']].unsqueeze(0)
-        res_dict = self.model(batch)
-        batch = {key: batch[key][0] for key in batch if len(batch[key])>0}
-        res_dict = {key: res_dict[key][0] for key in res_dict if len(res_dict[key])>0}
-
+        batch, res_dict = self.run_model_wo_ground_data(batch)
         pc0 = batch['origin_pc0']
         pose_0to1 = cal_pose0to1(batch["pose0"], batch["pose1"])
         transform_pc0 = pc0 @ pose_0to1[:3, :3].T + pose_0to1[:3, 3]
         pose_flow = transform_pc0 - pc0
 
+        final_flow = pose_flow.clone()
         if 'pc0_valid_point_idxes' in res_dict:
             valid_from_pc2res = res_dict['pc0_valid_point_idxes']
 
@@ -245,13 +253,9 @@ class ModelWrapper(LightningModule):
             pred_flow = pose_flow[~batch['gm0']].clone()
             pred_flow[valid_from_pc2res] = pose_flow[~batch['gm0']][valid_from_pc2res] + res_dict['flow']
 
-            final_flow = pose_flow.clone()
             final_flow[~batch['gm0']] = pred_flow
-        # else:
-        #     # pose_flow = pose_flows
-        #     # pred_flow_ = res_dict['flow'].cpu().detach()
-        #     # TODO: for other methods.... 
-        #     pred_flow = pose_flows.clone()
+        else:
+            final_flow[~batch['gm0']] = res_dict['flow'] + pose_flow[~batch['gm0']]
 
         # write final_flow into the dataset.
         key = str(batch['timestamp'])
@@ -262,7 +266,8 @@ class ModelWrapper(LightningModule):
             f[key].create_dataset(self.vis_name, data=final_flow.cpu().detach().numpy().astype(np.float32))
 
     def on_test_epoch_end(self):
+        self.model.timer.print(random_colors=False, bold=False)
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-        print(f"We already write the estimate flow: {self.vis_name} into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
+        print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
         print(f"python tests/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
         print(f"Enjoy! ^v^ ------ \n")
