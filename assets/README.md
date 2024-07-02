@@ -80,7 +80,7 @@ Install mmcv-full: [~15/30 mins] needed CUDA inside the env, echo ${PATH}
 
 ```bash
 mamba activate deflow
-cd mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install -e .
+cd assets/cuda/mmcv && python setup.py install && cd ../../..
 ```
 
 
@@ -89,7 +89,7 @@ Checking the environment:
 mamba activate deflow
 python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.version.cuda)"
 python -c "import lightning.pytorch as pl"
-python -c "from mmcv.ops import Voxelization, DynamicScatter;print('success test on mmcv package')"
+python -c "from assets.cuda.mmcv import Voxelization, DynamicScatter;print('success test on our lite mmcv package')"
 ```
 
 

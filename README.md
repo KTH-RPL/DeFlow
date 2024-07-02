@@ -30,10 +30,10 @@ cd DeFlow
 mamba env create -f environment.yaml
 ```
 
-mmcv:
+our light version of mmcv (faster installation):
 ```bash
 mamba activate deflow
-cd ~/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install -e .
+cd assets/cuda/mmcv && python setup.py install && cd ../../..
 ```
 
 Or another environment setup choice is [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment, you can pull it by. 

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmcv.ops import DynamicScatter
+from assets.cuda.mmcv import DynamicScatter
 
 
 class HardSimpleVFE(nn.Module):

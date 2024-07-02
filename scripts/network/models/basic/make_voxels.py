@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from mmcv.ops import Voxelization
+from assets.cuda.mmcv import Voxelization
 from typing import List, Tuple
 
 
