@@ -150,7 +150,7 @@ class ModelWrapper(LightningModule):
         if self.av2_mode == 'test':
             print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
             print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard. You processed to {self.leaderboard_version} version.")
-            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version)
+            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version, is_supervised = self.supervised_flag)
             # wandb.log_artifact(output_file)
             return
         
