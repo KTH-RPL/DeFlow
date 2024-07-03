@@ -5,18 +5,19 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/deflow-decoder-of-scene-flow-network-in/scene-flow-estimation-on-argoverse-2)](https://paperswithcode.com/sota/scene-flow-estimation-on-argoverse-2?p=deflow-decoder-of-scene-flow-network-in) 
 [![poster](https://img.shields.io/badge/ICRA24|Poster-6495ed?style=flat&logo=Shotcut&logoColor=wihte)](https://hkustconnect-my.sharepoint.com/:b:/g/personal/qzhangcb_connect_ust_hk/EXP_uXYmm_tItTWc8MafXHoB-1dVrMnvF1-lCzU1PXAvqQ?e=2FPfBS) 
 [![video](https://img.shields.io/badge/video-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtu.be/bZ4uUv0nDa0)
+[![blog](https://img.shields.io/badge/Blog%7C%E7%9F%A5%E4%B9%8E%E4%B8%AD%E6%96%87-1772f6?style=flat&logo=Shotcut)](https://zhuanlan.zhihu.com/p/706514747) 
 
 Task: Scene Flow Estimation in Autonomous Driving. 
 
 🔥 2024/07/02: Check the self-supervised version in our new ECCV'24 [SeFlow](https://github.com/KTH-RPL/SeFlow). The 1st ranking in new leaderboard among self-supervise methods.
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12173874) or [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) or [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
 
 - `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
-  [Dataset we included now: Argoverse 2, more on the way: Waymo and Nuscenes, custom data.]
+  [Dataset we included now: Argoverse 2 and Waymo, more on the way: Nuscenes, custom data.]
   
 - `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
 
@@ -77,7 +78,9 @@ python 1_train.py model=fastflow3d lr=2e-6 epochs=50 batch_size=16
 python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 ```
 
-To help community benchmarking, we provide our weights including fastflow3d, deflow [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
+To help community benchmarking, we provide our weights including fastflow3d, deflow [Zendo](https://zenodo.org/records/12632962). 
+These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
+Note: Please use these weights by following the term of use of the trained dataset (since weights are trained on these datasets) as [Argoverse 2 Term of Use](https://www.argoverse.org/about.html) mentioned: Using it under Non-Commercially (CC BY-NC-SA 4.0).
 
 ## 2. Evaluation
 
@@ -88,7 +91,7 @@ You can view Wandb dashboard for the training and evaluation results or [run/sub
 Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/12173874/files/deflow_best.ckpt
+wget https://zenodo.org/records/12632962/files/deflow_best.ckpt
 
 python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
 # it will output the av2_submit.zip or av2_submit_v2.zip for you to submit to leaderboard
@@ -121,7 +124,7 @@ We provide a script to visualize the results of the model. You can specify the c
 
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/12173874/files/deflow_best.ckpt
+wget https://zenodo.org/records/12632962/files/deflow_best.ckpt
 
 python 3_vis.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
@@ -151,6 +154,12 @@ https://github.com/KTH-RPL/DeFlow/assets/35365764/9b265d56-06a9-4300-899c-96047a
   author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
   title={DeFlow: Decoder of Scene Flow Network in Autonomous Driving},
   journal={arXiv preprint arXiv:2401.16122},
+  year={2024}
+}
+@article{zhang2024seflow,
+  author={Zhang, Qingwen and Yang, Yi and Li, Peizheng and Andersson, Olov and Jensfelt, Patric},
+  title={SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving},
+  journal={arXiv preprint arXiv:2407.01702},
   year={2024}
 }
 ```

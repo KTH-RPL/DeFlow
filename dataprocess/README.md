@@ -8,8 +8,8 @@ README for downloading and preprocessing the dataset. We includes waymo, argover
 
 We've updated the process dataset for:
 
-- [x] Argoverse 2.0: check [here](#argoverse-20). Involved from DeFlow
-- [ ] Waymo: done coding, public after review. Will be involved later by another paper.
+- [x] Argoverse 2.0: check [here](#argoverse-20). The process script Involved from [DeFlow](https://github.com/KTH-RPL/DeFlow).
+- [x] Waymo: check [here](#waymo-dataset). The process script was involved from [SeFlow](https://github.com/KTH-RPL/SeFlow).
 - [ ] nuScenes: done coding, public after review. Will be involved later by another paper.
 
 ## Download
@@ -83,12 +83,38 @@ gsutil -m cp -r "gs://waymo_open_dataset_scene_flow/valid" .
 gsutil -m cp -r "gs://waymo_open_dataset_scene_flow/train" .
 ```
 
+And flowlabel data can be downloaded here with ground segmentation by HDMap follow the same style of [ZeroFlow](https://github.com/kylevedder/zeroflow/blob/master/data_prep_scripts/waymo/extract_flow_and_remove_ground.py).
+
+You can download the processed map folder here to free yourself downloaded another type of data again:
+
+```bash
+wget https://zenodo.org/records/12632962/files/waymo_map.tar.gz
+tar -xvf waymo_map.tar.gz -C /home/kin/data/waymo/flowlabel
+# you will see there is a `map` folder in the `flowlabel` folder now.
+```
+
+#### Dataset frames
+
+| Dataset | # Total Scene | # Total Frames |
+| ------- | ------------- | -------------- |
+| train   | 799           | 155687         |
+| val     | 203           | 39381          |
+
 ## Process
 This directory contains the scripts to preprocess the datasets. 
 
 - `extract_av2.py`: Process the datasets in Argoverse 2.0.
 - `extract_nus.py`: Process the datasets in nuScenes.
 - `extract_waymo.py`: Process the datasets in Waymo.
+
+Example Running command:`
+```bash
+# av2:
+python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
+
+# waymo:
+python dataprocess/extract_waymo.py --mode train --flow_data_dir /home/kin/data/waymo/flowlabel --map_dir /home/kin/data/waymo/flowlabel/map --output_dir /home/kin/data/waymo/preprocess  --nproc 48
+```
 
 All these preprocess scripts will generate the same format `.h5` file. The file contains the following in codes:
 
@@ -120,6 +146,8 @@ After preprocessing, all data can use the same dataloader to load the data. As a
 Or you can run testing file to visualize the data. 
 
 ```bash
-python3 tests/preview_data.py --data_dir /home/kin/data/av2/preprocess/sensor/mini
-python3 tests/preview_data.py --data_dir /home/kin/data/nuScenes/preprocess/v1.0-mini
+# view gt flow
+python3 tests/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --flow_mode flow
+
+python3 tests/scene_flow.py --data_dir /home/kin/data/waymo/preprocess/val --flow_mode flow
 ```
