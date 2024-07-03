@@ -18,7 +18,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 from av2.datasets.sensor.av2_sensor_dataloader import convert_pose_dataframe_to_SE3
 from av2.structures.sweep import Sweep
 from av2.structures.cuboid import CuboidList, Cuboid
-from av2.utils.io import read_feather
+from av2.utils.io import read_feather, io_utils
 from av2.map.map_api import ArgoverseStaticMap
 from av2.geometry.se3 import SE3
 from av2.datasets.sensor.constants import AnnotationCategories
@@ -83,11 +83,16 @@ def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
 
 def read_pose_pc_ground(data_dir: Path, log_id: str, timestamp: int, avm: ArgoverseStaticMap):
     log_poses_df = read_feather(data_dir / log_id / "city_SE3_egovehicle.feather")
+    # more detail: https://argoverse.github.io/user-guide/datasets/lidar.html#sensor-suite
+    ego2sensor_pose = io_utils.read_ego_SE3_sensor((data_dir / log_id))['up_lidar']
     filtered_log_poses_df = log_poses_df[log_poses_df["timestamp_ns"].isin([timestamp])]
     pose = convert_pose_dataframe_to_SE3(filtered_log_poses_df.loc[filtered_log_poses_df["timestamp_ns"] == timestamp])
     pc = Sweep.from_feather(data_dir / log_id / "sensors" / "lidar" / f"{timestamp}.feather").xyz
     # transform to city coordinate since sweeps[0].xyz is in ego coordinate to get ground mask
     is_ground = avm.get_ground_points_boolean(pose.transform_point_cloud(pc))
+
+    # NOTE(SeFlow): transform to sensor coordinate, since some ray-casting based methods need sensor coordinate
+    pc = ego2sensor_pose.inverse().transform_point_cloud(pc) 
     return pc, pose, is_ground
 
 def compute_sceneflow(data_dir: Path, log_id: str, timestamps: Tuple[int, int]) -> Dict[str, Union[np.ndarray, SE3]]:

@@ -56,7 +56,8 @@ Download tips in [dataprocess/README.md](dataprocess/README.md#argoverse-20)
 
 ### Prepare Data
 
-Normally need 10-45 mins finished run following commands totally (my computer 15 mins, our cluster 40 mins).
+Normally need 10-45 mins finished run following commands totally (my computer 15 mins, our cluster 40 mins). 
+Kindly reminder: Please provide the absolute path for the data_dir and output_dir. 
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
