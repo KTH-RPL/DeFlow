@@ -35,29 +35,16 @@ import pickle
 from zipfile import ZipFile
 import pandas as pd
 
+import os, sys
+BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
+sys.path.append(BASE_DIR)
+from scripts.utils.mics import create_reading_index
+
 BOUNDING_BOX_EXPANSION: Final = 0.2
 CATEGORY_TO_INDEX: Final = {
     **{"NONE": 0},
     **{k.value: i + 1 for i, k in enumerate(AnnotationCategories)},
 }
-
-def create_reading_index(data_dir: Path):
-    start_time = time.time()
-    data_index = []
-    for file_name in tqdm(os.listdir(data_dir), ncols=100, desc='Create reading index'):
-        if not file_name.endswith(".h5"):
-            continue
-        scene_id = file_name.split(".")[0]
-        timestamps = []
-        with h5py.File(data_dir/file_name, 'r') as f:
-            timestamps.extend(f.keys())
-        timestamps.sort(key=lambda x: int(x)) # make sure the timestamps are in order
-        for timestamp in timestamps:
-            data_index.append([scene_id, timestamp])
-
-    with open(data_dir/'index_total.pkl', 'wb') as f:
-        pickle.dump(data_index, f)
-        print(f"Create reading index Successfully, cost: {time.time() - start_time:.2f} s")
 
 def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
     """
