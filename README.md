@@ -4,22 +4,20 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [![arXiv](https://img.shields.io/badge/arXiv-2407.01702-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2407.01702)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/seflow-a-self-supervised-scene-flow-method-in/self-supervised-scene-flow-estimation-on-1)](https://paperswithcode.com/sota/self-supervised-scene-flow-estimation-on-1?p=seflow-a-self-supervised-scene-flow-method-in)
 [poster comming soon]
-[viceo coming soon]
+[video coming soon]
 
-We got accepted! I will **update the whole code** around the DDL of the camera-ready version (**Jul'15**). Stay Tunned with us.
+2024/07/05 11:35: I'm working on updating code here now. **Not fully ready yet** until Jul'15.
 
-2024/07/03 10:15: I'm working on updating code here now. Not fully ready yet until Jul'15.
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) link. Check usage in 2. Evaluation or 3. Visualization.
+Task: __Self-Supervised__ Scene Flow Estimation in Autonomous Driving. 
 
-Task: Self-Supervised Scene Flow Estimation in Autonomous Driving. 
-
-**Scripts** quick view in our scripts (We directly follow our previous work [DeFlow code structure](https://github.com/KTH-RPL/DeFlow)):
+We directly follow our previous work [code structure](https://github.com/KTH-RPL/DeFlow), so you may want to start from the easier one with supervised learning first: Try our [DeFlow](https://github.com/KTH-RPL/DeFlow). Then you will find this is simple to you (things about how to train under self-supervised). Here are **Scripts** quick view in this repo:
 
 - `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
   [Dataset we included now: Argoverse 2 and Waymo.  more on the way: Nuscenes, custom data.]
   
-- `0_process.py`: process data with save dufomap, cluster labels inside file.
+- `0_process.py`: process data with save dufomap, cluster labels inside file. Only needed for training.
 
 - `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
 
@@ -44,8 +42,8 @@ export PATH=/usr/local/cuda-11.7/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
 
 mamba activate seflow
-cd assets/cuda/mmcv && python ./setup.py install
-cd assets/cuda/chamfer3D && python ./setup.py install
+cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
+cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
 
 Or you always can choose [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment and free yourself from installation, you can pull it by. 
@@ -62,7 +60,7 @@ docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data 
 
 coming soon
 
-## 2. Evaluation & Upload to Leaderboard
+## 2. Evaluation
 
 You can view Wandb dashboard for the training and evaluation results or upload result to online leaderboard.
 
@@ -108,8 +106,7 @@ python tests/scene_flow.py --flow_mode 'seflow_official' --data_dir /home/kin/da
 }
 ```
 
-Thanks to RPL member: [Li Ling](https://www.kth.se/profile/liling) helps review our SeFlow manuscript. 
-Thanks to [Kyle Vedder (ZeroFlow)](https://github.com/kylevedder), who kindly opened his code including pre-trained weights, and discussed their result with us which helped this work a lot. 
+💞 Thanks to RPL member: [Li Ling](https://www.kth.se/profile/liling) helps revise our SeFlow manuscript. Thanks to [Kyle Vedder](https://kylevedder.github.io), who kindly opened his code (ZeroFlow) including pre-trained weights, and discussed their result with us which helped this work a lot. 
 
 This work was partially supported by the Wallenberg AI, Autonomous Systems and Software Program (WASP) funded by the Knut and Alice Wallenberg Foundation and Prosense (2020-02963) funded by Vinnova. 
 The computations were enabled by the supercomputing resource Berzelius provided by National Supercomputer Centre at Linköping University and the Knut and Alice Wallenberg Foundation, Sweden.

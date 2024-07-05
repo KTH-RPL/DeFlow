@@ -37,16 +37,15 @@ python ../chamfer_cuda.py
 
 ## ChamferDis Speed
 
-Points num: pc0: 88132, pc1: 88101
+The number of points: (pc0: 88132, pc1: 88101)
 
 | Function | Time (ms) |
 | :---: | :---: |
-| CUDA(Old, SCOOP, Batch) | 83.275 |
-| Faiss | 368.269 |
-| Pytorch3D | 61.474 |
-| CUDA(New, NonBatch) | 33.199 |
-| CUDA(New, SharedM) | 17.379 |
-| mmcv | N/A |
+| Faiss | 817.698 |
+| CUDA([SCOOP](https://github.com/itailang/SCOOP/tree/master/auxiliary/ChamferDistancePytorch), Batch) | 83.275 |
+| Pytorch3D | 68.256 |
+| CUDA([SeFlow](https://github.com/KTH-RPL/SeFlow), SharedM) | **1.667** |
+| ~~mmcv~~(chamfer2D) | 651.510 |
 
 对比命令行：
 
