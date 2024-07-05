@@ -107,11 +107,11 @@ class DynamicMapData(Dataset):
         ego_pc0 = pc0 @ inv_pose0[:3, :3].T + inv_pose0[:3, 3]
         # pcdpy3.save_pcd(f"{BASE_DIR}/ego_pc0.pcd", ego_pc0)
         # sys.exit(0)
-        gm0 = np.array(self.groundseg.run(ego_pc0[:,:3].tolist()))
+        gm0 = np.array(self.groundseg.run(ego_pc0[:,:3]))
 
         inv_pose1 = inv_pose_matrix(pose1)
         ego_pc1 = pc1 @ inv_pose1[:3, :3].T + inv_pose1[:3, 3]
-        gm1 = np.array(self.groundseg.run(ego_pc1[:,:3].tolist()))
+        gm1 = np.array(self.groundseg.run(ego_pc1[:,:3]))
 
         res_dict['pc0'] = torch.tensor(ego_pc0.astype(np.float32))
         res_dict['gm0'] = torch.tensor(gm0.astype(np.bool_))

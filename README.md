@@ -22,13 +22,15 @@ cd ~/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && pip install
 
 Download data: [KTH-RPL/DynamicMap_Benchmark](https://github.com/KTH-RPL/DynamicMap_Benchmark?tab=readme-ov-file#dataset--scripts)
 
-Download pre-trained weights for models are available in [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). The weight is trained on Argoverse 2 Sensor dataset only, while DynamicMap Benchmark `av2` is from Argoverse 2 Map dataset. So no overfitting issue.
+Download pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962). The weight is trained on Argoverse 2 Sensor dataset only, while DynamicMap Benchmark `av2` is from Argoverse 2 Map dataset. So no overfitting issue.
 
 ## 1. DynamicMap Inference
 
 ```bash
-python main.py checkpoint=/home/kin/deflow.ckpt dataset_path=/home/kin/data/00
-python main.py checkpoint=/home/kin/deflow.ckpt dataset_path=/home/kin/data/av2
+wget https://zenodo.org/records/12632962/files/deflow_official.ckpt
+
+python main.py checkpoint=/home/kin/deflow_official.ckpt dataset_path=/home/kin/data/00
+python main.py checkpoint=/home/kin/deflow_official.ckpt dataset_path=/home/kin/data/av2
 ```
 
 
