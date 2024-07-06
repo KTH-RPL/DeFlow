@@ -285,14 +285,17 @@ class HDF5Data:
             data_dict['pc0'] = f[key]['lidar'][:]
             data_dict['gm0'] = f[key]['ground_mask'][:]
             data_dict['pose0'] = f[key]['pose'][:]
-
-            if self.flow_view:
+            for label_key in ['dufo_label', 'label']:
+                if label_key in f[key]:
+                    data_dict[label_key] = f[key][label_key][:]
+            if self.flow_view and self.vis_name in f[key]:
                 data_dict[self.vis_name] = f[key][self.vis_name][:]
                 next_timestamp = str(self.data_index[index+1][1])
                 data_dict['pose1'] = f[next_timestamp]['pose'][:]
                 data_dict['pc1'] = f[next_timestamp]['lidar'][:]
                 data_dict['gm1'] = f[next_timestamp]['ground_mask'][:]
-
+            elif self.flow_view:
+                print(f"[Warning]: No {self.vis_name} in {scene_id} at {timestamp}, check the data.")
         return data_dict
     
 from av2.geometry.se3 import SE3

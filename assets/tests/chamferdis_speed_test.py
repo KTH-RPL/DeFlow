@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     if CUDA_TEST:
         print("------ START CUDA Chamfer Distance Cal ------")
-        from assets.cuda.chamfer_cuda import nnChamferDis
+        from assets.cuda.chamfer3D import nnChamferDis
         start_time = time.time()
         loss = nnChamferDis(truncate_dist=False)(pc0, pc1)
         print(f"Chamfer Distance Cal time: {(time.time() - start_time)*1000:.3f} ms")

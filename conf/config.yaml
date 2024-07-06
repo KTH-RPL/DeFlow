@@ -6,7 +6,7 @@ defaults:
 slurm_id: 00000
 
 wandb_mode: offline # [offline, disabled, online]
-wandb_project_name: deflow
+wandb_project_name: seflow
 dataset_path: /home/kin/data/av2/preprocess/sensor
 
 output: ${model.name}-${slurm_id}
@@ -25,13 +25,15 @@ gradient_clip_val: 5.0
 
 # optimizer ==> Adam
 lr: 2e-6
-loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss]
+loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss, seflowLoss]
+add_seloss: {chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}
+label_name: label # choices: [label, nnd_label_plus]
 
 # log settings
 seed: 42069
 log_every: 10 # steps epochs*dataset_size/batch_size
 val_every: 5 # epochs
-save_top_model: 4 # top_k model will be saved.
+save_top_model: 5 # top_k model will be saved.
 
 # -----> Model and Task Parameters
 voxel_size: [0.2, 0.2, 6]

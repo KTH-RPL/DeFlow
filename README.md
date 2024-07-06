@@ -37,11 +37,11 @@ cd SeFlow && mamba env create -f environment.yaml
 
 CUDA package (need install nvcc compiler), the compile time is around 1-5 minutes:
 ```bash
+mamba activate seflow
 # change it if you use different cuda version (I tested 11.3, 11.4, 11.7 all works)
 export PATH=/usr/local/cuda-11.7/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
 
-mamba activate seflow
 cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
 cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
@@ -58,7 +58,32 @@ docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data 
 
 ## 1. Run & Train
 
-coming soon
+Note: Prepare raw data and process train data only needed run once for the task. No need to run till you delete all data.
+
+### Prepare raw data 
+
+Extract all data to unified h5 format. [Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
+```bash
+python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
+python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
+python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
+```
+
+### Process train data
+
+Process train data for self-supervised learning. Only training data needs this step. [Runtime: Normally need 15 hours for my desktop, 3 hours for the cluster with five available nodes parallel running.]
+
+```bash
+python 0_process.py --data_dir /home/kin/data/av2/preprocess/sensor/train --scene_range 0,701
+```
+
+### Train the model
+
+Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. 
+
+```bash
+python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
+```
 
 ## 2. Evaluation
 

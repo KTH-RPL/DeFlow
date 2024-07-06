@@ -13,7 +13,6 @@
 from torch import nn
 from torch.autograd import Function
 import torch
-import importlib
 
 import os, time
 import chamfer3D
@@ -56,15 +55,16 @@ class nnChamferDis(nn.Module):
         super(nnChamferDis, self).__init__()
         self.truncate_dist = truncate_dist
 
-    def forward(self, input0, input1):
+    def forward(self, input0, input1, truncate_dist=-1):
         input0 = input0.contiguous()
         input1 = input1.contiguous()
         dist0, dist1, _, _ = ChamferDis.apply(input0, input1)
 
-        if not self.truncate_dist:
+        if truncate_dist<=0:
             return torch.mean(dist0) + torch.mean(dist1)
-        valid_mask0 = (dist0 <= 2)
-        valid_mask1 = (dist1 <= 2)
+
+        valid_mask0 = (dist0 <= truncate_dist)
+        valid_mask1 = (dist1 <= truncate_dist)
         truncated_sum = torch.nanmean(dist0[valid_mask0]) + torch.nanmean(dist1[valid_mask1])
         return truncated_sum
 
@@ -75,6 +75,7 @@ class nnChamferDis(nn.Module):
         return dist0, dist1
     
     def truncated_dis(self, input0, input1):
+        # nsfp: truncated distance way is set >= 2 to 0 but not nanmean
         cham_x, cham_y = self.dis_res(input0, input1)
         cham_x[cham_x >= 2] = 0.0
         cham_y[cham_y >= 2] = 0.0

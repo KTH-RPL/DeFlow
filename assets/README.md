@@ -1,56 +1,18 @@
-DeFlow Assets
+SeFlow Assets
 ---
 
 There are two ways to setup the environment: conda in your desktop and docker container isolate environment.
 
-## Docker Environment
+## Docker
 
-### Build Docker Image
-If you want to build docker with compile all things inside, there are some things need setup first in your own desktop environment: 
-- [NVIDIA-driver](https://www.nvidia.com/download/index.aspx): which I believe most of people may already have it. Try `nvidia-smi` to check if you have it.
-- [Docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository):
-   ```bash
-   # Add Docker's official GPG key:
-   sudo apt-get update
-   sudo apt-get install ca-certificates curl
-   sudo install -m 0755 -d /etc/apt/keyrings
-   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-   sudo chmod a+r /etc/apt/keyrings/docker.asc
+Docker installation check [DeFlow Assets](https://github.com/KTH-RPL/DeFlow/blob/main/assets/README.md#docker-environment). Then you can build and run the container by:
 
-   # Add the repository to Apt sources:
-   echo \
-   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   sudo apt-get update
-   ```
-- [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
-   ```bash
-   sudo apt update && apt install nvidia-container-toolkit
-   ```
+```bash
+cd SeFlow
+docker build -t zhangkin/seflow .
 
-Then follow [this stackoverflow answers](https://stackoverflow.com/questions/59691207/docker-build-with-nvidia-runtime):
-1. Edit/create the /etc/docker/daemon.json with content:
-   ```bash
-   {
-      "runtimes": {
-         "nvidia": {
-               "path": "/usr/bin/nvidia-container-runtime",
-               "runtimeArgs": []
-            } 
-      },
-      "default-runtime": "nvidia" 
-   }
-   ```
-2. Restart docker daemon:
-   ```bash
-   sudo systemctl restart docker
-   ```
-
-3. Then you can build the docker image:
-   ```bash
-   cd DeFlow && docker build -t zhangkin/deflow .
-   ```
+docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data --name seflow zhangkin/seflow /bin/zsh
+```
    
 ## Installation
 
@@ -71,25 +33,29 @@ bash Mambaforge-$(uname)-$(uname -m).sh
 Create base env: [~5 mins]
 
 ```bash
-git clone https://github.com/KTH-RPL/DeFlow
-cd DeFlow && git submodule update --init --recursive
+git clone https://github.com/KTH-RPL/SeFlow.git
 mamba env create -f assets/environment.yml
 ```
 
-Install mmcv-full: [~15/30 mins] needed CUDA inside the env, echo ${PATH}
-
+CUDA package (need install nvcc compiler), the compile time is around 1-5 minutes:
 ```bash
-mamba activate deflow
-cd assets/cuda/mmcv && python setup.py install && cd ../../..
+mamba activate seflow
+# change it if you use different cuda version (I tested 11.3, 11.4, 11.7 all works)
+export PATH=/usr/local/cuda-11.7/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
+
+cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
+cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
 
 
-Checking the environment:
+Checking important packages in our environment now:
 ```bash
 mamba activate deflow
 python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.version.cuda)"
-python -c "import lightning.pytorch as pl"
-python -c "from assets.cuda.mmcv import Voxelization, DynamicScatter;print('success test on our lite mmcv package')"
+python -c "import lightning.pytorch as pl; print(pl.__version__)"
+python -c "from assets.cuda.mmcv import Voxelization, DynamicScatter;print('successfully import on our lite mmcv package')"
+python -c "from assets.cuda.chamfer3D import nnChamferDis;print('successfully import on our chamfer3D package')"
 ```
 
 
