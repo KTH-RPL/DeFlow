@@ -9,7 +9,7 @@
 
 cd /proj/berzelius-2023-154/users/x_qinzh/seflow
 
-SOURCE="/proj/berzelius-2023-154/users/x_qinzh/data/av2/seflow_preprocess"
+SOURCE="/proj/berzelius-2023-154/users/x_qinzh/data/av2/preprocess_v2"
 DEST="/scratch/local/av2"
 SUBDIRS=("sensor/train" "sensor/val")
 
