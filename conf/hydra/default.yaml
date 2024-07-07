@@ -1,2 +1,2 @@
 run:
-  dir: logs/wandb/${output}
+  dir: logs/wandb

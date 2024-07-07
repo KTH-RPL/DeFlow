@@ -40,10 +40,20 @@ def collate_fn_pad(batch):
 
     if 'ego_motion' in batch[0]:
         res_dict['ego_motion'] = [batch[i]['ego_motion'] for i in range(len(batch))]
+        
+    if 'pc0_dynamic' in batch[0]:
+        pc0_dynamic_after_mask_ground, pc1_dynamic_after_mask_ground= [], []
+        for i in range(len(batch)):
+            pc0_dynamic_after_mask_ground.append(batch[i]['pc0_dynamic'][~batch[i]['gm0']])
+            pc1_dynamic_after_mask_ground.append(batch[i]['pc1_dynamic'][~batch[i]['gm1']])
+        pc0_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc0_dynamic_after_mask_ground, batch_first=True, padding_value=0)
+        pc1_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc1_dynamic_after_mask_ground, batch_first=True, padding_value=0)
+        res_dict['pc0_dynamic'] = pc0_dynamic_after_mask_ground
+        res_dict['pc1_dynamic'] = pc1_dynamic_after_mask_ground
 
     return res_dict
 class HDF5Dataset(Dataset):
-    def __init__(self, directory, eval = False, leaderboard_version=1):
+    def __init__(self, directory, dufo=False, eval = False, leaderboard_version=1):
         '''
         directory: the directory of the dataset
         eval: if True, use the eval index
@@ -55,6 +65,7 @@ class HDF5Dataset(Dataset):
             self.data_index = pickle.load(f)
 
         self.eval_index = False
+        self.dufo = dufo
         if eval:
             index_file_name = 'index_eval.pkl'
             if leaderboard_version == 2:
@@ -106,12 +117,12 @@ class HDF5Dataset(Dataset):
 
         key = str(timestamp)
         with h5py.File(os.path.join(self.directory, f'{scene_id}.h5'), 'r') as f:
-            pc0 = torch.tensor(f[key]['lidar'][:])
+            pc0 = torch.tensor(f[key]['lidar'][:][:,:3])
             gm0 = torch.tensor(f[key]['ground_mask'][:])
             pose0 = torch.tensor(f[key]['pose'][:])
 
             next_timestamp = str(self.data_index[index_+1][1])
-            pc1 = torch.tensor(f[next_timestamp]['lidar'][:])
+            pc1 = torch.tensor(f[next_timestamp]['lidar'][:][:,:3])
             gm1 = torch.tensor(f[next_timestamp]['ground_mask'][:])
             pose1 = torch.tensor(f[next_timestamp]['pose'][:])
             # if pc0[~gm0].shape[0] == 0:
@@ -143,10 +154,15 @@ class HDF5Dataset(Dataset):
                 ego_motion = torch.tensor(f[key]['ego_motion'][:])
                 res_dict['ego_motion'] = ego_motion
 
+            if self.dufo:
+                res_dict['pc0_dynamic'] = torch.tensor(f[key]['label'][:].astype('int16'))
+                res_dict['pc1_dynamic'] = torch.tensor(f[next_timestamp]['label'][:].astype('int16'))
+
             if self.eval_index:
                 # looks like v2 not follow the same rule as v1 with eval_mask provided
                 eval_mask = torch.tensor(f[key]['eval_mask'][:]) if 'eval_mask' in f[key] else torch.ones_like(pc0[:, 0], dtype=torch.bool)
                 res_dict['eval_mask'] = eval_mask
+
         return res_dict
 
 if __name__ == "__main__":

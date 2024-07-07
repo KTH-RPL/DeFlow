@@ -28,10 +28,11 @@ from scripts.pl_model import ModelWrapper
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg):
+    if cfg.loss_fn == 'seflowLoss' and cfg.add_seloss is None:
+        raise ValueError("Please specify the self-supervised loss items for seflowLoss.")
     pl.seed_everything(cfg.seed, workers=True)
-    output_dir = HydraConfig.get().runtime.output_dir
 
-    train_dataset = HDF5Dataset(cfg.train_data)
+    train_dataset = HDF5Dataset(cfg.train_data, dufo=(cfg.loss_fn == 'seflowLoss'))
     train_loader = DataLoader(train_dataset,
                               batch_size=cfg.batch_size,
                               shuffle=True,
@@ -48,7 +49,14 @@ def main(cfg):
     
     # count gpus, overwrite gpus
     cfg.gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
-    model_name = cfg.model.name
+
+    # only for logging on folder name.
+    if cfg.loss_fn == 'seflowLoss':
+        method_name = "seflow"
+        cfg.output = cfg.output.replace("deflow", "seflow")
+    else:
+        method_name = cfg.model.name
+    output_dir = HydraConfig.get().runtime.output_dir + f"/{cfg.output}"
     Path(os.path.join(output_dir, "checkpoints")).mkdir(parents=True, exist_ok=True)
     
     cfg = DictConfig(OmegaConf.to_container(cfg, resolve=True))
@@ -57,7 +65,7 @@ def main(cfg):
     callbacks = [
         ModelCheckpoint(
             dirpath=os.path.join(output_dir, "checkpoints"),
-            filename="{epoch:02d}_"+model_name,
+            filename="{epoch:02d}_"+method_name,
             auto_insert_metric_name=False,
             monitor=cfg.model.val_monitor,
             mode="min",
@@ -90,6 +98,9 @@ def main(cfg):
         print("Initiating wandb and trainer successfully.  ^V^ ")
         print(f"We will use {cfg.gpus} GPUs to train the model. Check the checkpoints in {output_dir} checkpoints folder.")
         print("Total Train Dataset Size: ", len(train_dataset))
+        if cfg.add_seloss is not None and cfg.loss_fn == 'seflowLoss':
+            print(f"Note: We are in **self-supervised** training now. No ground truth label is used.")
+            print(f"We will use these loss items in {cfg.loss_fn}: {cfg.add_seloss}")
         print("-"*40+"\n")
 
     # NOTE(Qingwen): search & check: def training_step(self, batch, batch_idx)

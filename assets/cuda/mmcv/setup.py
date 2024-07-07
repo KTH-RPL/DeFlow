@@ -11,14 +11,21 @@ setup(
             name='mmcv._ext',
             sources=[
                 "/".join(__file__.split("/")[:-1] + ["scatter_points_cuda.cu"]),
+                "/".join(__file__.split("/")[:-1] + ["scatter_points.cpp"]),
                 "/".join(__file__.split("/")[:-1] + ["voxelization_cuda.cu"]),
                 "/".join(__file__.split("/")[:-1] + ["voxelization.cpp"]),
-                "/".join(__file__.split("/")[:-1] + ["scatter_points.cpp"]),
                 "/".join(__file__.split("/")[:-1] + ["cudabind.cpp"]),
                 "/".join(__file__.split("/")[:-1] + ["pybind.cpp"]),
 
-            ]),
-            # extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}
+            ],
+            # extra_compile_args={
+            #     'cxx': ['-std=c++17'], 
+            #     'nvcc': ['-std=c++17',
+            #     '-D__CUDA_NO_HALF_OPERATORS__',
+            #     '-D__CUDA_NO_HALF_CONVERSIONS__',
+            #     '-D__CUDA_NO_HALF2_OPERATORS__',
+            #              ],}
+            ),
     ],
     cmdclass={'build_ext': BuildExtension},
 

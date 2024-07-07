@@ -6,6 +6,93 @@
 # Description: Define the loss function for training.
 """
 import torch
+from assets.cuda.chamfer3D import nnChamferDis
+MyCUDAChamferDis = nnChamferDis()
+
+# NOTE(Qingwen 24/07/06): squared, so it's sqrt(4) = 2m, in 10Hz the vel = 20m/s ~ 72km/h
+# If your scenario is different, may need adjust this TRUNCATED to 80-120km/h vel.
+TRUNCATED_DIST = 4
+
+
+def seflowLoss(res_dict, timer=None):
+    pc0_label = res_dict['pc0_labels']
+    pc1_label = res_dict['pc1_labels']
+
+    pc0 = res_dict['pc0']
+    pc1 = res_dict['pc1']
+
+    est_flow = res_dict['est_flow']
+
+    pseudo_pc1from0 = pc0 + est_flow
+
+    unique_labels = torch.unique(pc0_label)
+    pc0_dynamic = pc0[pc0_label > 0]
+    pc1_dynamic = pc1[pc1_label > 0]
+    fpc1_dynamic = pseudo_pc1from0[pc0_label > 0]
+    # NOTE(Qingwen): since we set THREADS_PER_BLOCK is 256
+    have_dynamic_cluster = (pc0_dynamic.shape[0] > 256) & (pc1_dynamic.shape[0] > 256)
+
+    # first item loss: chamfer distance
+    # timer[5][1].start("MyCUDAChamferDis")
+    # raw: pc0 to pc1, est: pseudo_pc1from0 to pc1, idx means the nearest index
+    est_dist0, est_dist1, _, _ = MyCUDAChamferDis.disid_res(pseudo_pc1from0, pc1)
+    raw_dist0, raw_dist1, raw_idx0, _ = MyCUDAChamferDis.disid_res(pc0, pc1)
+    chamfer_dis = torch.mean(est_dist0[est_dist0 <= TRUNCATED_DIST]) + torch.mean(est_dist1[est_dist1 <= TRUNCATED_DIST])
+    # timer[5][1].stop()
+    
+    # second item loss: dynamic chamfer distance
+    # timer[5][2].start("DynamicChamferDistance")
+    dynamic_chamfer_dis = torch.tensor(0.0, device=est_flow.device)
+    if have_dynamic_cluster:
+        dynamic_chamfer_dis += MyCUDAChamferDis(pc0_dynamic, pc1_dynamic, truncate_dist=TRUNCATED_DIST)
+    # timer[5][2].stop()
+
+    # third item loss: exclude static points' flow
+    # NOTE(Qingwen): add in the later part on label==0
+    static_cluster_loss = torch.tensor(0.0, device=est_flow.device)
+    
+    # fourth item loss: same label points' flow should be same
+    # timer[5][3].start("SameClusterLoss")
+    moved_cluster_loss = torch.tensor(0.0, device=est_flow.device)
+    moved_cluster_norms = torch.tensor([], device=est_flow.device)
+    for label in unique_labels:
+        mask = pc0_label == label
+        if label == 0:
+            # Eq. 6 in the paper
+            static_cluster_loss += torch.linalg.vector_norm(est_flow[mask, :], dim=-1).mean()
+        elif label > 0 and have_dynamic_cluster:
+            cluster_id_flow = est_flow[mask, :]
+            cluster_nnd = raw_dist0[mask]
+            if cluster_nnd.shape[0] <= 0:
+                continue
+
+            # Eq. 8 in the paper and with truncated
+            k = min(10, cluster_nnd.shape[0])
+            top_dis, top_idx = torch.topk(cluster_nnd, k=k, largest=True)
+            for ii in range(k):
+                if pc1_label[raw_idx0[mask][top_idx[ii]]] > 0 and top_dis[ii] <= TRUNCATED_DIST:
+                    break
+            max_idx = top_idx[ii]
+            
+            # Eq. 9 in the paper
+            max_flow = pc1[raw_idx0[mask][max_idx]] - pc0[mask][max_idx]
+
+            # Eq. 10 in the paper
+            moved_cluster_norms = torch.cat((moved_cluster_norms, torch.linalg.vector_norm((cluster_id_flow - max_flow), dim=-1)))
+    
+    if moved_cluster_norms.shape[0] > 0:
+        moved_cluster_loss = moved_cluster_norms.mean() # Eq. 11 in the paper
+    elif have_dynamic_cluster:
+        moved_cluster_loss = torch.mean(raw_dist0[raw_dist0 <= TRUNCATED_DIST]) + torch.mean(raw_dist1[raw_dist1 <= TRUNCATED_DIST])
+    # timer[5][3].stop()
+
+    res_loss = {
+        'chamfer_dis': chamfer_dis,
+        'dynamic_chamfer_dis': dynamic_chamfer_dis,
+        'static_flow_loss': static_cluster_loss,
+        'cluster_based_pc0pc1': moved_cluster_loss,
+    }
+    return res_loss
 
 def deflowLoss(res_dict):
     pred = res_dict['est_flow']
@@ -30,7 +117,7 @@ def deflowLoss(res_dict):
         weight_loss += speed_0_4
     if ~speed_mid.isnan():
         weight_loss += speed_mid
-    return weight_loss
+    return {'loss': weight_loss}
 
 # ref from zeroflow loss class FastFlow3DDistillationLoss()
 def zeroflowLoss(res_dict):
@@ -50,7 +137,7 @@ def zeroflowLoss(res_dict):
     importance_scale = torch.max(mins, torch.min(1.8 * gt_speed - 0.8, maxs))
     # error = torch.norm(pred - gt, dim=1, p=2) * importance_scale
     error = error * importance_scale
-    return error.mean()
+    return {'loss': error.mean()}
 
 # ref from zeroflow loss class FastFlow3DSupervisedLoss()
 def ff3dLoss(res_dict):
@@ -62,4 +149,4 @@ def ff3dLoss(res_dict):
     is_foreground_class = (classes > 0) # 0 is background, ref: FOREGROUND_BACKGROUND_BREAKDOWN
     background_scalar = is_foreground_class.float() * 0.9 + 0.1
     error = error * background_scalar
-    return error.mean()
+    return {'loss': error.mean()}

@@ -67,6 +67,8 @@ def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
         timestamps = sorted([int(file.replace('.feather', ''))
                         for file in os.listdir(Path(mask_dir) / f"{data_mode}-masks" / scene_id)
                         if file.endswith('.feather')])
+        if not os.path.exists(output_dir_ / f'{scene_id}.h5'):
+            continue
         with h5py.File(output_dir_ / f'{scene_id}.h5', 'r+') as f:
             for ts in timestamps:
                 key = str(ts)
