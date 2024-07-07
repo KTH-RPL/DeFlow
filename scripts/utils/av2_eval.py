@@ -74,6 +74,63 @@ BUCKETED_METACATAGORIES = {
     "OTHER_VEHICLES": OTHER_VEHICLES,
 }
 
+import av2.geometry.geometry as geometry_utils
+from av2.geometry.se3 import SE3
+from av2.utils.typing import NDArrayFloat
+from av2.utils.io import read_feather
+
+# Mapping from egovehicle time in nanoseconds to egovehicle pose.
+TimestampedCitySE3EgoPoses = Dict[int, SE3]
+
+# Mapping from sensor name to sensor pose.
+SensorPosesMapping = Dict[str, SE3]
+
+def read_ego_SE3_sensor(log_dir: Path) -> SensorPosesMapping:
+    """Read the sensor poses for the given log.
+
+    The sensor pose defines an SE3 transformation from the sensor reference frame to the egovehicle reference frame.
+    Mathematically we define this transformation as: $$ego_SE3_sensor$$.
+
+    In other words, when this transformation is applied to a set of points in the sensor reference frame, they
+    will be transformed to the egovehicle reference frame.
+
+    Example (1).
+        points_ego = ego_SE3_sensor(points_sensor) apply the SE3 transformation to points in the sensor reference frame.
+
+    Example (2).
+        sensor_SE3_ego = ego_SE3_sensor^{-1} take the inverse of the SE3 transformation.
+        points_sensor = sensor_SE3_ego(points_ego) apply the SE3 transformation to points in the ego reference frame.
+
+    Extrinsics:
+        sensor_name: Name of the sensor.
+        qw: scalar component of a quaternion.
+        qx: X-axis coefficient of a quaternion.
+        qy: Y-axis coefficient of a quaternion.
+        qz: Z-axis coefficient of a quaternion.
+        tx_m: X-axis translation component.
+        ty_m: Y-axis translation component.
+        tz_m: Z-axis translation component.
+
+    Args:
+        log_dir: Path to the log directory.
+
+    Returns:
+        Mapping from sensor name to sensor pose.
+    """
+    ego_SE3_sensor_path = Path(log_dir, "calibration", "egovehicle_SE3_sensor.feather")
+    ego_SE3_sensor = read_feather(ego_SE3_sensor_path)
+    rotations = geometry_utils.quat_to_mat(
+        ego_SE3_sensor.loc[:, ["qw", "qx", "qy", "qz"]].to_numpy()
+    )
+    translations = ego_SE3_sensor.loc[:, ["tx_m", "ty_m", "tz_m"]].to_numpy()
+    sensor_names = ego_SE3_sensor.loc[:, "sensor_name"].to_numpy()
+
+    sensor_name_to_pose: SensorPosesMapping = {
+        name: SE3(rotation=rotations[i], translation=translations[i])
+        for i, name in enumerate(sensor_names)
+    }
+    return sensor_name_to_pose
+
 @unique
 class SceneFlowMetricType(str, Enum):
     """Scene Flow metrics."""
