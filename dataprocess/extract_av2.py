@@ -265,10 +265,14 @@ def main(
     av2_type: str = "sensor",
     data_mode: str = "test",
     mask_dir: str = "/home/kin/data/av2/3d_scene_flow",
-    nproc: int = (multiprocessing.cpu_count() - 1)
+    nproc: int = (multiprocessing.cpu_count() - 1),
+    only_index: bool = False,
 ):
     data_root_ = Path(argo_dir) / av2_type/ data_mode
     output_dir_ = Path(output_dir) / av2_type / data_mode
+    if only_index:
+        create_reading_index(output_dir_)
+        return
     output_dir_.mkdir(exist_ok=True, parents=True)
     process_logs(data_root_, output_dir_, nproc)
     create_reading_index(output_dir_)

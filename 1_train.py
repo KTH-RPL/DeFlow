@@ -31,14 +31,14 @@ def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
 
-    train_dataset = HDF5Dataset(cfg.dataset_path + "/train")
+    train_dataset = HDF5Dataset(cfg.train_data)
     train_loader = DataLoader(train_dataset,
                               batch_size=cfg.batch_size,
                               shuffle=True,
                               num_workers=cfg.num_workers,
                               collate_fn=collate_fn_pad,
                               pin_memory=True)
-    val_loader = DataLoader(HDF5Dataset(cfg.dataset_path + "/val"),
+    val_loader = DataLoader(HDF5Dataset(cfg.val_data),
                             batch_size=cfg.batch_size,
                             shuffle=False,
                             num_workers=cfg.num_workers,
