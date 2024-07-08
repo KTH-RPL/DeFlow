@@ -58,11 +58,11 @@ docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data 
 
 ## 1. Run & Train
 
-Note: Prepare raw data and process train data only needed run once for the task. No need to run till you delete all data.
+Note: Prepare raw data and process train data only needed run once for the task. No need repeat the data process steps till you delete all data.
 
 ### Data Preparation
 
-Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset
+Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset.
 
 Maybe you only want to have the mini processed dataset to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
 <!-- You can download it from [Zenodo](https://zenodo.org/record/12632962) and extract it to the data folder. -->
@@ -91,7 +91,7 @@ python 0_process.py --data_dir /home/kin/data/av2/preprocess/sensor/train --scen
 
 ### Train the model
 
-Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. 
+Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. [Runtime: Around 18 hours in 4x A100 GPUs.]
 
 ```bash
 python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
@@ -99,10 +99,14 @@ python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=seflowLos
 
 ### Other Benchmark Models
 
+You can also train the supervised baseline model in our paper with the following command. [Runtime: Around 10 hours in 4x A100 GPUs.] 
 ```bash
 python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
 python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
 ```
+
+Note: You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 20 for faster converge (Through analysis, we also found it had better performance). 
+However, we kept the setting on lr=2e-6 and 50 epochs in the paper experiment for fair comparison with ZeroFlow where we directly use their provided weights etc.
 
 ## 2. Evaluation
 
