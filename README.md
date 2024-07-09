@@ -6,13 +6,13 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [poster comming soon]
 [video coming soon]
 
-2024/07/07 13:45: I'm working on updating code here now. **Not fully ready yet** until Jul'15.
+2024/07/09 16:34: I'm working on updating code here now. **Not fully ready yet** until Jul'15.
 
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
-Task: __Self-Supervised__ Scene Flow Estimation in Autonomous Driving. 
+Task: __Self-Supervised__ Scene Flow Estimation in Autonomous Driving. No human-label needed. Real-time inference (15-20Hz in RTX3090).
 
-We directly follow our previous work [code structure](https://github.com/KTH-RPL/DeFlow), so you may want to start from the easier one with supervised learning first: Try our [DeFlow](https://github.com/KTH-RPL/DeFlow). Then you will find this is simple to you (things about how to train under self-supervised). Here are **Scripts** quick view in this repo:
+We directly follow our previous work [code structure](https://github.com/KTH-RPL/DeFlow), so you may want to start from the easier one with supervised learning first: Try [DeFlow](https://github.com/KTH-RPL/DeFlow). Then you will find this is simple to you (things about how to train under self-supervised). Here are **Scripts** quick view in this repo:
 
 - `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
   [Dataset we included now: Argoverse 2 and Waymo.  more on the way: Nuscenes, custom data.]
@@ -25,6 +25,19 @@ We directly follow our previous work [code structure](https://github.com/KTH-RPL
 
 - `3_vis.py` : For visualization of the results with a video.
 
+<details> <summary>🎁 <b>One repository, All methods!</b> </summary>
+<!-- <br> -->
+You can try following methods in our code without any effort to make your own benchmark.
+
+- [x] [SeFlow](https://arxiv.org/abs/2407.01702) (Ours 🚀): ECCV 2024
+- [x] [DeFlow](https://arxiv.org/abs/2401.16122) (Ours 🚀): ICRA 2024
+- [x] [FastFlow3d](https://arxiv.org/abs/2103.01306): RA-L 2021
+- [x] [ZeroFlow](https://arxiv.org/abs/2305.10424): ICLR 2024, their pre-trained weight can covert into our format easily through [the script](TODO).
+- [ ] [NSFP](https://arxiv.org/abs/2111.01253): NeurIPS 2021, faster 3x than original version because of [our CUDA speed up](assets/cuda/README.md), same (slightly better) performance. Done coding, public after review.
+- [ ] [FastNSF](https://arxiv.org/abs/2304.09121): ICCV 2023. Done coding, public after review.
+- [ ] ... more on the way
+
+</details>
 
 ## 0. Setup
 
