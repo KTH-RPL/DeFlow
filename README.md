@@ -11,7 +11,7 @@ Task: Scene Flow Estimation in Autonomous Driving.
 
 🔥 2024/07/02: Check the self-supervised version in our new ECCV'24 [SeFlow](https://github.com/KTH-RPL/SeFlow). The 1st ranking in new leaderboard among self-supervise methods.
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) or [Onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/qzhangcb_connect_ust_hk/Et85xv7IGMRKgqrVeJEVkMoB_vxlcXk6OZUyiPjd4AArIg?e=lqRGhx). 
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962). 
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
@@ -24,6 +24,8 @@ Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualiza
 - `2_eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
 
 - `3_vis.py` : For visualization of the results with a video.
+
+💡: Want to learn how to add your own network in this structure? Check [Contribute](assets/README.md#contribute) section and know more about the code.
 
 ## 0. Setup
 
@@ -81,13 +83,12 @@ python 1_train.py model=deflow lr=2e-6 epochs=50 batch_size=16
 
 To help community benchmarking, we provide our weights including fastflow3d, deflow [Zendo](https://zenodo.org/records/12632962). 
 These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
+
 Note: Please use these weights by following the term of use of the trained dataset (since weights are trained on these datasets) as [Argoverse 2 Term of Use](https://www.argoverse.org/about.html) mentioned: Using it under Non-Commercially (CC BY-NC-SA 4.0).
 
 ## 2. Evaluation
 
-You can view Wandb dashboard for the training and evaluation results or [run/submit to av2 leaderboard to get official results](assets/README.md#leaderboard-submission).
-
-
+You can view Wandb dashboard for the training and evaluation results or run/submit to av2 leaderboard to get official results follow below steps.
 
 Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
