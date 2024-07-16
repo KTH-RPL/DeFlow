@@ -27,10 +27,12 @@ def main(cfg):
     if not os.path.exists(cfg.checkpoint):
         print(f"Checkpoint {cfg.checkpoint} does not exist. Need checkpoints for evaluation.")
         sys.exit(1)
-    
-    checkpoint_params = DictConfig(torch.load(cfg.checkpoint)["hyper_parameters"])
-    cfg.output = checkpoint_params.cfg.output + f"-{cfg.av2_mode}-v{cfg.leaderboard_version}"
+        
+    torch_load_ckpt = torch.load(cfg.checkpoint)
+    checkpoint_params = DictConfig(torch_load_ckpt["hyper_parameters"])
+    cfg.output = checkpoint_params.cfg.output + f"-e{torch_load_ckpt['epoch']}-{cfg.av2_mode}-v{cfg.leaderboard_version}"
     cfg.model.update(checkpoint_params.cfg.model)
+    
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
     print(f"\n---LOG[eval]: Loaded model from {cfg.checkpoint}. The model is {checkpoint_params.cfg.model.name}.\n")
 
@@ -43,7 +45,7 @@ def main(cfg):
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check: def eval_only_step_(self, batch, res_dict)
     trainer.validate(model = mymodel, \
-                     dataloaders = DataLoader(HDF5Dataset(cfg.dataset_path + f"/{cfg.av2_mode}", eval=True, leaderboard_version=cfg.leaderboard_version), batch_size=1, shuffle=False))
+                     dataloaders = DataLoader(HDF5Dataset(cfg.dataset_path + f"/{cfg.av2_mode}", n_frames=checkpoint_params.cfg.num_frames, eval=True, leaderboard_version=cfg.leaderboard_version), batch_size=1, shuffle=False))
     wandb.finish()
 
 if __name__ == "__main__":

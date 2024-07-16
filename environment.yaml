@@ -24,12 +24,14 @@ dependencies:
   - tabulate
   - scikit-learn==1.3.2
   - hdbscan
+  - setuptools==69.5.1
   - pip:
     - open3d==0.18.0
     - dztimer
     - av2==0.2.1
 
 # Reason about the version fixed:
+# setuptools==68.5.1: https://github.com/aws-neuron/aws-neuron-sdk/issues/893
 # mkl==2024.0.0: https://github.com/pytorch/pytorch/issues/123097#issue-2218541307
 # av2==0.2.1: in case other version deleted some functions.
 # lightning==2.0.1: https://stackoverflow.com/questions/76647518/how-to-fix-error-cannot-import-name-modelmetaclass-from-pydantic-main

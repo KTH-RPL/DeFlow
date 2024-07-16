@@ -6,9 +6,9 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [poster comming soon]
 [video coming soon]
 
-2024/07/09 16:34: I'm working on updating code here now. **Not fully ready yet** until Jul'15.
+2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by downloading demo data. The process script will be ready when the paper published. 
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12751363) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
 Task: __Self-Supervised__ Scene Flow Estimation in Autonomous Driving. No human-label needed. Real-time inference (15-20Hz in RTX3090).
 
@@ -32,9 +32,10 @@ You can try following methods in our code without any effort to make your own be
 - [x] [SeFlow](https://arxiv.org/abs/2407.01702) (Ours 🚀): ECCV 2024
 - [x] [DeFlow](https://arxiv.org/abs/2401.16122) (Ours 🚀): ICRA 2024
 - [x] [FastFlow3d](https://arxiv.org/abs/2103.01306): RA-L 2021
-- [x] [ZeroFlow](https://arxiv.org/abs/2305.10424): ICLR 2024, their pre-trained weight can covert into our format easily through [the script](TODO).
+- [x] [ZeroFlow](https://arxiv.org/abs/2305.10424): ICLR 2024, their pre-trained weight can covert into our format easily through [the script](tests/zerof2ours.py).
 - [ ] [NSFP](https://arxiv.org/abs/2111.01253): NeurIPS 2021, faster 3x than original version because of [our CUDA speed up](assets/cuda/README.md), same (slightly better) performance. Done coding, public after review.
 - [ ] [FastNSF](https://arxiv.org/abs/2304.09121): ICCV 2023. Done coding, public after review.
+<!-- - [ ] [Flow4D](https://arxiv.org/abs/2407.07995): 1st supervise network in the new leaderboard. Done coding, public after review. -->
 - [ ] ... more on the way
 
 </details>
@@ -51,7 +52,7 @@ cd SeFlow && mamba env create -f environment.yaml
 CUDA package (need install nvcc compiler), the compile time is around 1-5 minutes:
 ```bash
 mamba activate seflow
-# change it if you use different cuda version (I tested 11.3, 11.4, 11.7 all works)
+# change it if you use different cuda version (I tested 11.3, 11.4, 11.7, 11.8 all works)
 export PATH=/usr/local/cuda-11.7/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
 
@@ -71,17 +72,15 @@ docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data 
 
 ## 1. Run & Train
 
-Note: Prepare raw data and process train data only needed run once for the task. No need repeat the data process steps till you delete all data.
+Note: Prepare raw data and process train data only needed run once for the task. No need repeat the data process steps till you delete all data. We use [wandb](https://wandb.ai/) to log the training process, and you may want to change all `entity="kth-rpl"` to your own entity.
 
 ### Data Preparation
 
-Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset.
+Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you only want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
+You can download it from [Zenodo](https://zenodo.org/record/12751363) and extract it to the data folder.
 
-Maybe you only want to have the mini processed dataset to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
-<!-- You can download it from [Zenodo](https://zenodo.org/record/12632962) and extract it to the data folder. -->
 ```bash
-# TODO: update the link later when the data is ready
-# wget https://zenodo.org/record/12632962/files/demo_data.zip
+wget https://zenodo.org/record/12751363/files/demo_data.zip
 unzip demo_data.zip -p /home/kin/data/av2
 ```
 
@@ -89,7 +88,7 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 Extract all data to unified h5 format. [Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
 ```bash
-python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess
+python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
 python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
 ```
@@ -99,16 +98,18 @@ python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir 
 Process train data for self-supervised learning. Only training data needs this step. [Runtime: Normally need 15 hours for my desktop, 3 hours for the cluster with five available nodes parallel running.]
 
 ```bash
-python 0_process.py --data_dir /home/kin/data/av2/preprocess/sensor/train --scene_range 0,701
+python 0_process.py --data_dir /home/kin/data/av2/preprocess_v2/sensor/train --scene_range 0,701
 ```
 
 ### Train the model
 
-Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. [Runtime: Around 18 hours in 4x A100 GPUs.]
+Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. [Runtime: Around 11 hours in 4x A100 GPUs.]
 
 ```bash
-python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
+python 1_train.py model=deflow lr=2e-4 epochs=9 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
 ```
+
+Or you can directly download the pre-trained weight from [Zenodo](https://zenodo.org/records/12751363/files/seflow_best.ckpt) and skip the training step. 
 
 ### Other Benchmark Models
 
@@ -129,26 +130,35 @@ Since in training, we save all hyper-parameters and model checkpoints, the only 
 
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/12632962/files/seflow_official.ckpt
+wget https://zenodo.org/records/12751363/files/seflow_best.ckpt
 
 # it will directly prints all metric
-python 2_eval.py checkpoint=/home/kin/seflow_official.ckpt av2_mode=val
+python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=val
 
 # it will output the av2_submit.zip or av2_submit_v2.zip for you to submit to leaderboard
-python 2_eval.py checkpoint=/home/kin/seflow_official.ckpt av2_mode=test leaderboard_version=1
-python 2_eval.py checkpoint=/home/kin/seflow_official.ckpt av2_mode=test leaderboard_version=2
+python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=1
+python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=2
 ```
 
 
 ## 3. Visualization
 
-We provide a script to visualize the results of the model. You can specify the checkpoint path and the data path to visualize the results. The step is quickly similar to evaluation.
+We provide a script to visualize the results of the model also. You can specify the checkpoint path and the data path to visualize the results. The step is quickly similar to evaluation.
 
 ```bash
+python 3_vis.py checkpoint=/home/kin/seflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess_v2/sensor/vis
+
+# The output of above command will be like:
+Model: DeFlow, Checkpoint from: /home/kin/model_zoo/v2/seflow_best.ckpt
+We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
+python tests/scene_flow.py --flow_mode 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
+Enjoy! ^v^ ------ 
 
 # Then run the command in the terminal:
-python tests/scene_flow.py --flow_mode 'seflow_official' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tests/scene_flow.py --flow_mode 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
 ```
+
+https://github.com/user-attachments/assets/f031d1a2-2d2f-4947-a01f-834ed1c146e6
 
 
 ## Cite & Acknowledgements

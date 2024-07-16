@@ -43,12 +43,14 @@ class ModelWrapper(LightningModule):
             with open_dict(cfg.model.target):
                 cfg.model.target['grid_feature_size'] = \
                     [abs(int((cfg.point_cloud_range[0] - cfg.point_cloud_range[3]) / cfg.voxel_size[0])),
-                    abs(int((cfg.point_cloud_range[1] - cfg.point_cloud_range[4]) / cfg.voxel_size[1]))]
+                    abs(int((cfg.point_cloud_range[1] - cfg.point_cloud_range[4]) / cfg.voxel_size[1])),
+                    abs(int((cfg.point_cloud_range[2] - cfg.point_cloud_range[5]) / cfg.voxel_size[2]))]
         else:
             with open_dict(cfg.model.target):
                 cfg.model.target['grid_feature_size'] = \
                     [abs(int((cfg.model.target.point_cloud_range[0] - cfg.model.target.point_cloud_range[3]) / cfg.model.target.voxel_size[0])),
-                    abs(int((cfg.model.target.point_cloud_range[1] - cfg.model.target.point_cloud_range[4]) / cfg.model.target.voxel_size[1]))]
+                    abs(int((cfg.model.target.point_cloud_range[1] - cfg.model.target.point_cloud_range[4]) / cfg.model.target.voxel_size[1])),
+                    abs(int((cfg.model.target.point_cloud_range[2] - cfg.model.target.point_cloud_range[5]) / cfg.model.target.voxel_size[2]))]
         
         self.model = instantiate(cfg.model.target)
         self.model.apply(weights_init)
@@ -111,7 +113,6 @@ class ModelWrapper(LightningModule):
             pc1_points_lst = res_dict['pc1_points_lst']
         
         batch_sizes = len(batch["pose0"])
-        gt_flow = batch['flow']
         pose_flows = res_dict['pose_flow']
         est_flow = res_dict['flow']
         
@@ -182,8 +183,14 @@ class ModelWrapper(LightningModule):
 
         if self.av2_mode == 'test':
             print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-            print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard. You processed to {self.leaderboard_version} version.")
-            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version, is_supervised = self.supervised_flag)
+            print(f"Test results saved in: {self.save_res_path}, Please run submit command and upload to online leaderboard for results.")
+            if self.leaderboard_version == 1:
+                print(f"\nevalai challenge 2010 phase 4018 submit --file {self.save_res_path}.zip --large --private\n")
+            elif self.leaderboard_version == 2:
+                print(f"\nevalai challenge 2210 phase 4396 submit --file {self.save_res_path}.zip --large --private\n")
+            else:
+                print(f"Please check the leaderboard version in the config file. We only support version 1 and 2.")
+            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version, is_supervised = self.supervised_flag, output_file=self.save_res_path.as_posix() + ".zip")
             # wandb.log_artifact(output_file)
             return
         
@@ -196,9 +203,9 @@ class ModelWrapper(LightningModule):
         # wandb log things:
         for key in self.metrics.bucketed:
             for type_ in 'Static', 'Dynamic':
-                self.log(f"val/{type_}/{key}", self.metrics.bucketed[key][type_])
+                self.log(f"val/{type_}/{key}", self.metrics.bucketed[key][type_], sync_dist=True)
         for key in self.metrics.epe_3way:
-            self.log(f"val/{key}", self.metrics.epe_3way[key])
+            self.log(f"val/{key}", self.metrics.epe_3way[key], sync_dist=True)
         
         self.metrics.print()
 

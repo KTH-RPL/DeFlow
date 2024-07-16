@@ -7,4 +7,4 @@ target:
   voxel_size: ${voxel_size}
   point_cloud_range: ${point_cloud_range}
 
-val_monitor: val/Three-way
+val_monitor: val/Dynamic/Mean

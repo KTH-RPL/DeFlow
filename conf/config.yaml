@@ -8,8 +8,8 @@ slurm_id: 00000
 wandb_mode: offline # [offline, disabled, online]
 wandb_project_name: seflow
 
-train_data: /home/kin/data/dataset/av2/preprocess/sensor/train
-val_data: /home/kin/data/dataset/av2/preprocess/sensor/val
+train_data: /home/kin/data/dataset/av2/demo/preprocess_v2/sensor/train
+val_data: /home/kin/data/dataset/av2/demo/preprocess_v2/sensor/val
 
 output: ${model.name}-${slurm_id}
 
@@ -33,9 +33,10 @@ add_seloss:
 # log settings
 seed: 42069
 log_every: 10 # steps epochs*dataset_size/batch_size
-val_every: 5 # epochs
+val_every: 3 # epochs
 save_top_model: 5 # top_k model will be saved.
 
 # -----> Model and Task Parameters
 voxel_size: [0.2, 0.2, 6]
 point_cloud_range: [-51.2, -51.2, -3, 51.2, 51.2, 3]
+num_frames: 2

@@ -8,6 +8,7 @@
 import torch
 from assets.cuda.chamfer3D import nnChamferDis
 MyCUDAChamferDis = nnChamferDis()
+from scripts.utils.av2_eval import CATEGORY_TO_INDEX, BUCKETED_METACATAGORIES
 
 # NOTE(Qingwen 24/07/06): squared, so it's sqrt(4) = 2m, in 10Hz the vel = 20m/s ~ 72km/h
 # If your scenario is different, may need adjust this TRUNCATED to 80-120km/h vel.
@@ -28,7 +29,7 @@ def seflowLoss(res_dict, timer=None):
     unique_labels = torch.unique(pc0_label)
     pc0_dynamic = pc0[pc0_label > 0]
     pc1_dynamic = pc1[pc1_label > 0]
-    fpc1_dynamic = pseudo_pc1from0[pc0_label > 0]
+    # fpc1_dynamic = pseudo_pc1from0[pc0_label > 0]
     # NOTE(Qingwen): since we set THREADS_PER_BLOCK is 256
     have_dynamic_cluster = (pc0_dynamic.shape[0] > 256) & (pc1_dynamic.shape[0] > 256)
 

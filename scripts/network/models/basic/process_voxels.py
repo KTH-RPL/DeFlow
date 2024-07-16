@@ -413,4 +413,4 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                     coors, voxel_feats, voxel_coors)
                 features = torch.cat([point_feats, feat_per_point], dim=1)
 
-        return voxel_feats, voxel_coors
+        return voxel_feats, voxel_coors, point_feats

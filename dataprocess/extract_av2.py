@@ -218,6 +218,9 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
         for cnt, ts0 in enumerate(timestamps):
             group = f.create_group(str(ts0))
             pc0, pose0, is_ground_0 = read_pose_pc_ground(data_dir, log_id, ts0, avm)
+            if pc0.shape[0] < 256:
+                print(f'{log_id}/{ts0} has less than 256 points, skip this scenarios. Please check the data if needed.')
+                break
             if cnt == len(timestamps) - 1:
                 create_group_data(group, pc0, is_ground_0.astype(np.bool_), pose0.transform_matrix.astype(np.float32))
             else:

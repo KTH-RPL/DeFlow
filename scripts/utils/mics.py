@@ -327,7 +327,7 @@ def zip_res(res_folder, output_file="av2_submit.zip", leaderboard_version=2, is_
                     file_path = os.path.join(scene, log)
                     myzip.write(os.path.join(res_folder, file_path), arcname=file_path)
     else:
-        output_file = output_file.replace(".zip", f"_v{leaderboard_version}.zip")
+        output_file = output_file.replace(".zip", f"_v{leaderboard_version}.zip") if output_file=="av2_submit.zip" else output_file
         metadata = {"Is Supervised?": is_supervised}
         with ZipFile(output_file, "w") as myzip:
             myzip.writestr("metadata.json", json.dumps(metadata, indent=4))

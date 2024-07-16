@@ -32,14 +32,14 @@ def main(cfg):
         raise ValueError("Please specify the self-supervised loss items for seflowLoss.")
     pl.seed_everything(cfg.seed, workers=True)
 
-    train_dataset = HDF5Dataset(cfg.train_data, dufo=(cfg.loss_fn == 'seflowLoss'))
+    train_dataset = HDF5Dataset(cfg.train_data, n_frames=cfg.num_frames, dufo=(cfg.loss_fn == 'seflowLoss'))
     train_loader = DataLoader(train_dataset,
                               batch_size=cfg.batch_size,
                               shuffle=True,
                               num_workers=cfg.num_workers,
                               collate_fn=collate_fn_pad,
                               pin_memory=True)
-    val_loader = DataLoader(HDF5Dataset(cfg.val_data),
+    val_loader = DataLoader(HDF5Dataset(cfg.val_data, n_frames=cfg.num_frames),
                             batch_size=cfg.batch_size,
                             shuffle=False,
                             num_workers=cfg.num_workers,
@@ -52,8 +52,8 @@ def main(cfg):
 
     # only for logging on folder name.
     if cfg.loss_fn == 'seflowLoss':
+        cfg.output = cfg.output.replace(cfg.model.name, "seflow")
         method_name = "seflow"
-        cfg.output = cfg.output.replace("deflow", "seflow")
     else:
         method_name = cfg.model.name
     output_dir = HydraConfig.get().runtime.output_dir + f"/{cfg.output}"
