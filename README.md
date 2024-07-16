@@ -6,7 +6,7 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [poster comming soon]
 [video coming soon]
 
-2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by downloading demo data. The process script will be ready when the paper published. 
+2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by downloading demo data. The process script will be public when the paper published. 
 
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12751363) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
@@ -78,8 +78,8 @@ Note: Prepare raw data and process train data only needed run once for the task.
 
 ### Data Preparation
 
-Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you only want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
-You can download it from [Zenodo](https://zenodo.org/record/12751363) and extract it to the data folder.
+Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
+You can download it from [Zenodo](https://zenodo.org/record/12751363) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
 
 ```bash
 wget https://zenodo.org/record/12751363/files/demo_data.zip
