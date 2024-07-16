@@ -40,6 +40,8 @@ You can try following methods in our code without any effort to make your own be
 
 </details>
 
+💡: Want to learn how to add your own network in this structure? Check [Contribute](assets/README.md#contribute) section and know more about the code.
+
 ## 0. Setup
 
 **Environment**: Same to [DeFlow](https://github.com/KTH-RPL/DeFlow). And even lighter here with extracting mmcv module we needed into cuda assets.
