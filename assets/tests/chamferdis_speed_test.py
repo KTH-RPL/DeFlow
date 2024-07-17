@@ -3,12 +3,10 @@
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
-
+#
 # Description: Test which existing chamfer distance is faster.
 
-Dependence:
+Dependence for this test scripts:
     * faiss-gpu
     * Pytorch3d
     * mmcv
@@ -29,8 +27,8 @@ MMCV_TEST = False
 CUDA_TEST = True
 
 if __name__ == "__main__":
-    pc0 = np.load('test_pc0.npy')
-    pc1 = np.load('test_pc1.npy')
+    pc0 = np.load(f'{BASEF_DIR}/assets/tests/test_pc0.npy')
+    pc1 = np.load(f'{BASEF_DIR}/assets/tests/test_pc1.npy')
     print('Start status on GPU allocation: {:.3f}MB'.format(torch.cuda.memory_allocated()/1024**2))
     pc0 = torch.from_numpy(pc0[...,:3]).float().cuda().contiguous()
     pc1 = torch.from_numpy(pc1[...,:3]).float().cuda().contiguous()
@@ -101,8 +99,8 @@ if __name__ == "__main__":
         from assets.cuda.chamfer3D import nnChamferDis
         start_time = time.time()
         loss = nnChamferDis(truncate_dist=False)(pc0, pc1)
-        print(f"Chamfer Distance Cal time: {(time.time() - start_time)*1000:.3f} ms")
         print("loss: ", loss)
+        print(f"Chamfer Distance Cal time: {(time.time() - start_time)*1000:.3f} ms")
         print()
 
 """
@@ -124,7 +122,7 @@ loss:  tensor(0.0591, device='cuda:0', grad_fn=<AddBackward0>)
 mmcv Chamfer Distance Cal time: 651.510 ms
 
 ------ START CUDA Chamfer Distance Cal ------
-Chamfer Distance Cal time: 1.667 ms
+Chamfer Distance Cal time: 14.308 ms
 loss:  tensor(0.1710, device='cuda:0', grad_fn=<AddBackward0>)
 
 """

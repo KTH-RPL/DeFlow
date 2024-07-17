@@ -44,7 +44,7 @@ The number of points: (pc0: 88132, pc1: 88101)
 | Faiss | 817.698 |
 | CUDA([SCOOP](https://github.com/itailang/SCOOP/tree/master/auxiliary/ChamferDistancePytorch), Batch) | 83.275 |
 | Pytorch3D | 68.256 |
-| CUDA([SeFlow](https://github.com/KTH-RPL/SeFlow), SharedM) | **1.667** |
+| CUDA([SeFlow](https://github.com/KTH-RPL/SeFlow), SharedM) | **14.308** |
 | ~~mmcv~~(chamfer2D) | 651.510 |
 
 对比命令行：
