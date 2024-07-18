@@ -52,7 +52,7 @@ def seflowLoss(res_dict, timer=None):
     # NOTE(Qingwen): add in the later part on label==0
     static_cluster_loss = torch.tensor(0.0, device=est_flow.device)
     
-    # fourth item loss: same label points' flow should be same
+    # fourth item loss: same label points' flow should be the same
     # timer[5][3].start("SameClusterLoss")
     moved_cluster_loss = torch.tensor(0.0, device=est_flow.device)
     moved_cluster_norms = torch.tensor([], device=est_flow.device)
@@ -67,13 +67,13 @@ def seflowLoss(res_dict, timer=None):
             if cluster_nnd.shape[0] <= 0:
                 continue
 
-            # Eq. 8 in the paper and with truncated
-            k = min(10, cluster_nnd.shape[0])
-            top_dis, top_idx = torch.topk(cluster_nnd, k=k, largest=True)
-            for ii in range(k):
-                if pc1_label[raw_idx0[mask][top_idx[ii]]] > 0 and top_dis[ii] <= TRUNCATED_DIST:
-                    break
-            max_idx = top_idx[ii]
+            # Eq. 8 in the paper
+            sorted_idxs = torch.argsort(cluster_nnd, descending=True)
+            nearby_label = pc1_label[raw_idx0[mask][sorted_idxs]] # nonzero means dynamic in label
+            non_zero_valid_indices = torch.nonzero(nearby_label > 0)
+            if non_zero_valid_indices.shape[0] <= 0:
+                continue
+            max_idx = sorted_idxs[non_zero_valid_indices.squeeze(1)[0]]
             
             # Eq. 9 in the paper
             max_flow = pc1[raw_idx0[mask][max_idx]] - pc0[mask][max_idx]
