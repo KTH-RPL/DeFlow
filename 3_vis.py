@@ -3,8 +3,9 @@
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
+# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
+# If you find this repo helpful, please cite the respective publication as 
+# listed on the above website.
 
 # Description: produce flow based on model predict and write into the dataset, 
 #              then use tests/scene_flow.py flow_mode="flow_est" to visualize the flow.
