@@ -2,7 +2,11 @@
 # Created: 2024-02-26 12:42
 # Copyright (C) 2024-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/), Tianshuai Hu (thuaj@connect.ust.hk)
-
+# 
+# This file is part of SeFlow (https://github.com/KTH-RPL/SeFlow).
+# If you find this repo helpful, please cite the respective publication as 
+# listed on the above website.
+# 
 # Description: Preprocess Data, save as h5df format for faster loading
 # This one is for Waymo dataset, refer a lot to 
 # Kyle's ZeroFlow code: https://github.com/kylevedder/zeroflow/tree/master/data_prep_scripts/waymo

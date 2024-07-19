@@ -2,7 +2,11 @@
 # Created: 2023-07-17 00:00
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
-#
+# 
+# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
+# If you find this repo helpful, please cite the respective publication as 
+# listed on the above website.
+# 
 # Description: Define the loss function for training.
 """
 import torch
