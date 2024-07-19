@@ -93,18 +93,18 @@ def vis(
         pose_flow = pc0[:, :3] @ ego_pose[:3, :3].T + ego_pose[:3, 3] - pc0[:, :3]
         
         pcd = o3d.geometry.PointCloud()
-        # pcd.points = o3d.utility.Vector3dVector(pc0[:, :3][~gm0])
-        # pcd.colors = o3d.utility.Vector3dVector(flow_color[~gm0])
-        pcd.points = o3d.utility.Vector3dVector(pc0[:, :3])
         if flow_mode in ['dufo_label', 'label']:
             labels = data[flow_mode]
-            pcd.colors = o3d.utility.Vector3dVector(np.ones_like(pc0[:, :3]))
-            for i in range(pc0.shape[0]):
-                if labels[i] <= 0:
-                    continue
+            pcd_i = o3d.geometry.PointCloud()
+            for label_i in np.unique(labels):
+                pcd_i.points = o3d.utility.Vector3dVector(pc0[labels == label_i][:, :3])
+                if label_i <= 0:
+                    pcd_i.paint_uniform_color([1.0, 1.0, 1.0])
                 else:
-                    pcd.colors[i] = color_map[labels[i] % len(color_map)]
+                    pcd_i.paint_uniform_color(color_map[label_i % len(color_map)])
+                pcd += pcd_i
         elif flow_mode in data:
+            pcd.points = o3d.utility.Vector3dVector(pc0[:, :3])
             flow = data[flow_mode] - pose_flow # ego motion compensation here.
             flow_color = flow_to_rgb(flow) / 255.0
             is_dynamic = np.linalg.norm(flow, axis=1) > 0.1

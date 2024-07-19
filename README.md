@@ -6,7 +6,8 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [poster comming soon]
 [video coming soon]
 
-2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by downloading demo data. The process script will be public when the paper published. 
+2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by [downloading](https://zenodo.org/records/12751363) demo data or pretrained weight for evaluation. 
+The process script will be public when the paper published. 
 
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12751363) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
@@ -40,7 +41,7 @@ You can try following methods in our code without any effort to make your own be
 
 </details>
 
-💡: Want to learn how to add your own network in this structure? Check [Contribute](assets/README.md#contribute) section and know more about the code.
+💡: Want to learn how to add your own network in this structure? Check [Contribute](assets/README.md#contribute) section and know more about the code. Fee free to pull request!
 
 ## 0. Setup
 
@@ -117,12 +118,12 @@ Or you can directly download the pre-trained weight from [Zenodo](https://zenodo
 
 You can also train the supervised baseline model in our paper with the following command. [Runtime: Around 10 hours in 4x A100 GPUs.] 
 ```bash
-python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
-python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
+python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
+python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
 ```
 
 Note: You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 20 for faster converge (Through analysis, we also found it had better performance). 
-However, we kept the setting on lr=2e-6 and 50 epochs in the paper experiment for fair comparison with ZeroFlow where we directly use their provided weights etc.
+However, we kept the setting on lr=2e-6 and 50 epochs in the paper experiment for the fair comparison with ZeroFlow where we directly use their provided weights.
 
 ## 2. Evaluation
 
@@ -142,6 +143,9 @@ python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard
 python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=2
 ```
 
+And the terminal will output the command for you to submit the result to the online leaderboard. You can follow [this section for evalai](https://github.com/KTH-RPL/DeFlow?tab=readme-ov-file#2-evaluation).
+
+Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
 
 ## 3. Visualization
 
