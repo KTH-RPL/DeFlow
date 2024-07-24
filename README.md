@@ -66,8 +66,8 @@ cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 Or you always can choose [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment and free yourself from installation, you can pull it by. 
 If you have different arch, please build it by yourself `cd SeFlow && docker build -t zhangkin/seflow` by going through [build-docker-image](https://github.com/KTH-RPL/DeFlow/blob/main/assets/README.md/#build-docker-image) section.
 ```bash
-# option 1: pull from docker hub, todo test and update
-# docker pull zhangkin/seflow
+# option 1: pull from docker hub
+docker pull zhangkin/seflow
 
 # run container
 docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data --name seflow zhangkin/seflow /bin/zsh
