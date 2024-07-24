@@ -89,7 +89,7 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 #### Prepare raw data 
 
-Checking more information (download raw data etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
+Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
 [Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
