@@ -75,6 +75,7 @@ docker pull zhangkin/seflow
 
 # run container
 docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data --name deflow zhangkin/seflow /bin/zsh
+# then `mamba activate seflow` python environment is ready to use
 ```
 
 ## 1. Run & Train
@@ -99,14 +100,6 @@ Checking more information (download raw data etc) in [dataprocess/README.md](dat
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
 python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir /home/kin/data/av2/3d_scene_flow
-```
-
-#### Process train data
-
-Process train data for self-supervised learning. Only training data needs this step. [Runtime: Normally need 15 hours for my desktop, 3 hours for the cluster with five available nodes parallel running.]
-
-```bash
-python 0_process.py --data_dir /home/kin/data/av2/preprocess_v2/sensor/train --scene_range 0,701
 ```
 
 ### Train the model
