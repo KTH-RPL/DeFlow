@@ -6,7 +6,7 @@ defaults:
 slurm_id: 00000
 
 wandb_mode: offline # [offline, disabled, online]
-wandb_project_name: seflow
+wandb_project_name: deflow
 
 train_data: /home/kin/data/dataset/av2/demo/preprocess_v2/sensor/train
 val_data: /home/kin/data/dataset/av2/demo/preprocess_v2/sensor/val
@@ -26,8 +26,8 @@ epochs: 3
 gradient_clip_val: 5.0
 
 # optimizer ==> Adam
-lr: 2e-6
-loss_fn: seflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss, seflowLoss]
+lr: 2e-4
+loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss, seflowLoss]
 add_seloss: # {chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}
 
 # log settings
