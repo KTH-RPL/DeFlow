@@ -285,14 +285,17 @@ class HDF5Data:
             data_dict['pc0'] = f[key]['lidar'][:]
             data_dict['gm0'] = f[key]['ground_mask'][:]
             data_dict['pose0'] = f[key]['pose'][:]
+            for flow_key in [self.vis_name, 'dufo_label', 'label']:
+                if flow_key in f[key]:
+                    data_dict[flow_key] = f[key][flow_key][:]
 
             if self.flow_view:
-                data_dict[self.vis_name] = f[key][self.vis_name][:]
                 next_timestamp = str(self.data_index[index+1][1])
                 data_dict['pose1'] = f[next_timestamp]['pose'][:]
                 data_dict['pc1'] = f[next_timestamp]['lidar'][:]
                 data_dict['gm1'] = f[next_timestamp]['ground_mask'][:]
-
+            elif self.flow_view:
+                print(f"[Warning]: No {self.vis_name} in {scene_id} at {timestamp}, check the data.")
         return data_dict
     
 from av2.geometry.se3 import SE3
@@ -324,7 +327,7 @@ def zip_res(res_folder, output_file="av2_submit.zip", leaderboard_version=2, is_
                     file_path = os.path.join(scene, log)
                     myzip.write(os.path.join(res_folder, file_path), arcname=file_path)
     else:
-        output_file = output_file.replace(".zip", f"_v{leaderboard_version}.zip")
+        output_file = output_file.replace(".zip", f"_v{leaderboard_version}.zip") if output_file=="av2_submit.zip" else output_file
         metadata = {"Is Supervised?": is_supervised}
         with ZipFile(output_file, "w") as myzip:
             myzip.writestr("metadata.json", json.dumps(metadata, indent=4))

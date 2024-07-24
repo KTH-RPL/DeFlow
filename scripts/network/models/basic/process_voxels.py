@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from mmcv.ops import DynamicScatter
+from assets.cuda.mmcv import DynamicScatter
 
 
 class HardSimpleVFE(nn.Module):
@@ -413,4 +413,4 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                     coors, voxel_feats, voxel_coors)
                 features = torch.cat([point_feats, feat_per_point], dim=1)
 
-        return voxel_feats, voxel_coors
+        return voxel_feats, voxel_coors, point_feats

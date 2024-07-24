@@ -19,7 +19,8 @@ import os, sys
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 from scripts.utils.mics import HDF5Data, flow_to_rgb
-from scripts.utils.o3d_view import MyVisualizer
+from scripts.utils.o3d_view import MyVisualizer, color_map
+
 
 VIEW_FILE = f"{BASE_DIR}/assets/view/av2.json"
 
@@ -91,18 +92,26 @@ def vis(
         ego_pose = np.linalg.inv(pose1) @ pose0
 
         pose_flow = pc0[:, :3] @ ego_pose[:3, :3].T + ego_pose[:3, 3] - pc0[:, :3]
-        flow = data[flow_mode] - pose_flow # ego motion compensation here.
-        flow_color = flow_to_rgb(flow) / 255.0
-        is_dynamic = np.linalg.norm(flow, axis=1) > 0.1
-        flow_color[~is_dynamic] = [1, 1, 1]
-        flow_color[gm0] = [1, 1, 1]
-
-        black_color = np.zeros_like(flow_color)
+        
         pcd = o3d.geometry.PointCloud()
-        # pcd.points = o3d.utility.Vector3dVector(pc0[:, :3][~gm0])
-        # pcd.colors = o3d.utility.Vector3dVector(flow_color[~gm0])
-        pcd.points = o3d.utility.Vector3dVector(pc0[:, :3])
-        pcd.colors = o3d.utility.Vector3dVector(flow_color)
+        if flow_mode in ['dufo_label', 'label']:
+            labels = data[flow_mode]
+            pcd_i = o3d.geometry.PointCloud()
+            for label_i in np.unique(labels):
+                pcd_i.points = o3d.utility.Vector3dVector(pc0[labels == label_i][:, :3])
+                if label_i <= 0:
+                    pcd_i.paint_uniform_color([1.0, 1.0, 1.0])
+                else:
+                    pcd_i.paint_uniform_color(color_map[label_i % len(color_map)])
+                pcd += pcd_i
+        elif flow_mode in data:
+            pcd.points = o3d.utility.Vector3dVector(pc0[:, :3])
+            flow = data[flow_mode] - pose_flow # ego motion compensation here.
+            flow_color = flow_to_rgb(flow) / 255.0
+            is_dynamic = np.linalg.norm(flow, axis=1) > 0.1
+            flow_color[~is_dynamic] = [1, 1, 1]
+            flow_color[gm0] = [1, 1, 1]
+            pcd.colors = o3d.utility.Vector3dVector(flow_color)
         o3d_vis.update([pcd, o3d.geometry.TriangleMesh.create_coordinate_frame(size=2)])
 
 if __name__ == '__main__':

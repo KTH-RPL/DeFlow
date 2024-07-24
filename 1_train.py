@@ -3,7 +3,8 @@
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
+# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow) and 
+# SeFlow (https://github.com/KTH-RPL/SeFlow) projects.
 # If you find this repo helpful, please cite the respective publication as 
 # listed on the above website.
 
@@ -29,27 +30,38 @@ from scripts.pl_model import ModelWrapper
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg):
+    if cfg.loss_fn == 'seflowLoss' and cfg.add_seloss is None:
+        raise ValueError("Please specify the self-supervised loss items for seflowLoss.")
     pl.seed_everything(cfg.seed, workers=True)
-    output_dir = HydraConfig.get().runtime.output_dir
 
-    train_dataset = HDF5Dataset(cfg.train_data)
+    train_dataset = HDF5Dataset(cfg.train_data, n_frames=cfg.num_frames, dufo=(cfg.loss_fn == 'seflowLoss'))
     train_loader = DataLoader(train_dataset,
                               batch_size=cfg.batch_size,
                               shuffle=True,
                               num_workers=cfg.num_workers,
                               collate_fn=collate_fn_pad,
                               pin_memory=True)
-    val_loader = DataLoader(HDF5Dataset(cfg.val_data),
+    val_loader = DataLoader(HDF5Dataset(cfg.val_data, n_frames=cfg.num_frames),
                             batch_size=cfg.batch_size,
                             shuffle=False,
                             num_workers=cfg.num_workers,
                             collate_fn=collate_fn_pad,
                             pin_memory=True)
                             
-    
     # count gpus, overwrite gpus
     cfg.gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
-    model_name = cfg.model.name
+
+    output_dir = HydraConfig.get().runtime.output_dir
+    # overwrite logging folder name for SSL.
+    if cfg.loss_fn == 'seflowLoss':
+        cfg.output = cfg.output.replace(cfg.model.name, "seflow")
+        output_dir = output_dir.replace(cfg.model.name, "seflow")
+        method_name = "seflow"
+    else:
+        method_name = cfg.model.name
+
+    # FIXME: hydra output_dir with ddp run will mkdir in the parent folder. Looks like PL and Hydra trying to fix in lib.
+    # print(f"Output Directory: {output_dir} in gpu rank: {torch.cuda.current_device()}")
     Path(os.path.join(output_dir, "checkpoints")).mkdir(parents=True, exist_ok=True)
     
     cfg = DictConfig(OmegaConf.to_container(cfg, resolve=True))
@@ -58,7 +70,7 @@ def main(cfg):
     callbacks = [
         ModelCheckpoint(
             dirpath=os.path.join(output_dir, "checkpoints"),
-            filename="{epoch:02d}_"+model_name,
+            filename="{epoch:02d}_"+method_name,
             auto_insert_metric_name=False,
             monitor=cfg.model.val_monitor,
             mode="min",
@@ -91,6 +103,9 @@ def main(cfg):
         print("Initiating wandb and trainer successfully.  ^V^ ")
         print(f"We will use {cfg.gpus} GPUs to train the model. Check the checkpoints in {output_dir} checkpoints folder.")
         print("Total Train Dataset Size: ", len(train_dataset))
+        if cfg.add_seloss is not None and cfg.loss_fn == 'seflowLoss':
+            print(f"Note: We are in **self-supervised** training now. No ground truth label is used.")
+            print(f"We will use these loss items in {cfg.loss_fn}: {cfg.add_seloss}")
         print("-"*40+"\n")
 
     # NOTE(Qingwen): search & check: def training_step(self, batch, batch_idx)

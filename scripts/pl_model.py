@@ -29,6 +29,10 @@ from scripts.utils.av2_eval import write_output_file
 from scripts.network.models.basic import cal_pose0to1
 from scripts.network.official_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
 
+# debugging tools
+# import faulthandler
+# faulthandler.enable()
+
 torch.set_float32_matmul_precision('medium')
 class ModelWrapper(LightningModule):
     def __init__(self, cfg, eval=False):
@@ -40,17 +44,22 @@ class ModelWrapper(LightningModule):
             with open_dict(cfg.model.target):
                 cfg.model.target['grid_feature_size'] = \
                     [abs(int((cfg.point_cloud_range[0] - cfg.point_cloud_range[3]) / cfg.voxel_size[0])),
-                    abs(int((cfg.point_cloud_range[1] - cfg.point_cloud_range[4]) / cfg.voxel_size[1]))]
+                    abs(int((cfg.point_cloud_range[1] - cfg.point_cloud_range[4]) / cfg.voxel_size[1])),
+                    abs(int((cfg.point_cloud_range[2] - cfg.point_cloud_range[5]) / cfg.voxel_size[2]))]
         else:
             with open_dict(cfg.model.target):
                 cfg.model.target['grid_feature_size'] = \
                     [abs(int((cfg.model.target.point_cloud_range[0] - cfg.model.target.point_cloud_range[3]) / cfg.model.target.voxel_size[0])),
-                    abs(int((cfg.model.target.point_cloud_range[1] - cfg.model.target.point_cloud_range[4]) / cfg.model.target.voxel_size[1]))]
+                    abs(int((cfg.model.target.point_cloud_range[1] - cfg.model.target.point_cloud_range[4]) / cfg.model.target.voxel_size[1])),
+                    abs(int((cfg.model.target.point_cloud_range[2] - cfg.model.target.point_cloud_range[5]) / cfg.model.target.voxel_size[2]))]
         
         self.model = instantiate(cfg.model.target)
         self.model.apply(weights_init)
         
         self.loss_fn = import_func("scripts.network.loss_func."+cfg.loss_fn) if 'loss_fn' in cfg else None
+        self.add_seloss = cfg.add_seloss if 'add_seloss' in cfg else None
+        self.cfg_loss_name = cfg.loss_fn if 'loss_fn' in cfg else None
+        
         self.batch_size = int(cfg.batch_size) if 'batch_size' in cfg else 1
         self.lr = cfg.lr if 'lr' in cfg else None
         self.epochs = cfg.epochs if 'epochs' in cfg else None
@@ -90,29 +99,54 @@ class ModelWrapper(LightningModule):
         self.model.timer[5].start("Loss")
         # compute loss
         total_loss = 0.0
-        batch_sizes = len(batch["pose0"])
-        gt_flow = batch['flow']
 
-        pose_flows = res_dict['pose_flow']
+        if self.cfg_loss_name in ['seflowLoss']:
+            loss_items, weights = zip(*[(key, weight) for key, weight in self.add_seloss.items()])
+            loss_logger = {'chamfer_dis': 0.0, 'dynamic_chamfer_dis': 0.0, 'static_flow_loss': 0.0, 'cluster_based_pc0pc1': 0.0}
+        else:
+            loss_items, weights = ['loss'], [1.0]
+            loss_logger = {'loss': 0.0}
+
         pc0_valid_idx = res_dict['pc0_valid_point_idxes'] # since padding
+        pc1_valid_idx = res_dict['pc1_valid_point_idxes'] # since padding
+        if 'pc0_points_lst' in res_dict and 'pc1_points_lst' in res_dict:
+            pc0_points_lst = res_dict['pc0_points_lst']
+            pc1_points_lst = res_dict['pc1_points_lst']
+        
+        batch_sizes = len(batch["pose0"])
+        pose_flows = res_dict['pose_flow']
         est_flow = res_dict['flow']
         
         for batch_id in range(batch_sizes):
             pc0_valid_from_pc2res = pc0_valid_idx[batch_id]
+            pc1_valid_from_pc2res = pc1_valid_idx[batch_id]
             pose_flow_ = pose_flows[batch_id][pc0_valid_from_pc2res]
-            est_flow_ = est_flow[batch_id]
-            gt_flow_ = gt_flow[batch_id][pc0_valid_from_pc2res]
 
-            gt_flow_ = gt_flow_ - pose_flow_
-            res_dict = {'est_flow': est_flow_, 
-                        'gt_flow': gt_flow_, 
-                        'gt_classes': None if 'flow_category_indices' not in batch else batch['flow_category_indices'][batch_id][pc0_valid_from_pc2res],
-                        }
-            loss = self.loss_fn(res_dict)
-            total_loss += loss
-        
+            dict2loss = {'est_flow': est_flow[batch_id], 
+                        'gt_flow': None if 'flow' not in batch else batch['flow'][batch_id][pc0_valid_from_pc2res] - pose_flow_, 
+                        'gt_classes': None if 'flow_category_indices' not in batch else batch['flow_category_indices'][batch_id][pc0_valid_from_pc2res]}
+            
+            if 'pc0_dynamic' in batch:
+                dict2loss['pc0_labels'] = batch['pc0_dynamic'][batch_id][pc0_valid_from_pc2res]
+                dict2loss['pc1_labels'] = batch['pc1_dynamic'][batch_id][pc1_valid_from_pc2res]
+
+            # different methods may don't have this in the res_dict
+            if 'pc0_points_lst' in res_dict and 'pc1_points_lst' in res_dict:
+                dict2loss['pc0'] = pc0_points_lst[batch_id]
+                dict2loss['pc1'] = pc1_points_lst[batch_id]
+
+            res_loss = self.loss_fn(dict2loss)
+            for i, loss_name in enumerate(loss_items):
+                total_loss += weights[i] * res_loss[loss_name]
+            for key in res_loss:
+                loss_logger[key] += res_loss[key]
+
         self.log("trainer/loss", total_loss/batch_sizes, sync_dist=True, batch_size=self.batch_size)
+        if self.add_seloss is not None:
+            for key in loss_logger:
+                self.log(f"trainer/{key}", loss_logger[key]/batch_sizes, sync_dist=True, batch_size=self.batch_size)
         self.model.timer[5].stop()
+
         # NOTE (Qingwen): if you want to view the detail breakdown of time cost
         # self.model.timer.print(random_colors=False, bold=False)
         return total_loss
@@ -150,8 +184,14 @@ class ModelWrapper(LightningModule):
 
         if self.av2_mode == 'test':
             print(f"\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
-            print(f"Test results saved in: {self.save_res_path}, Please run submit to zip the results and upload to online leaderboard. You processed to {self.leaderboard_version} version.")
-            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version, is_supervised = self.supervised_flag)
+            print(f"Test results saved in: {self.save_res_path}, Please run submit command and upload to online leaderboard for results.")
+            if self.leaderboard_version == 1:
+                print(f"\nevalai challenge 2010 phase 4018 submit --file {self.save_res_path}.zip --large --private\n")
+            elif self.leaderboard_version == 2:
+                print(f"\nevalai challenge 2210 phase 4396 submit --file {self.save_res_path}.zip --large --private\n")
+            else:
+                print(f"Please check the leaderboard version in the config file. We only support version 1 and 2.")
+            output_file = zip_res(self.save_res_path, leaderboard_version=self.leaderboard_version, is_supervised = self.supervised_flag, output_file=self.save_res_path.as_posix() + ".zip")
             # wandb.log_artifact(output_file)
             return
         
@@ -164,9 +204,9 @@ class ModelWrapper(LightningModule):
         # wandb log things:
         for key in self.metrics.bucketed:
             for type_ in 'Static', 'Dynamic':
-                self.log(f"val/{type_}/{key}", self.metrics.bucketed[key][type_])
+                self.log(f"val/{type_}/{key}", self.metrics.bucketed[key][type_], sync_dist=True)
         for key in self.metrics.epe_3way:
-            self.log(f"val/{key}", self.metrics.epe_3way[key])
+            self.log(f"val/{key}", self.metrics.epe_3way[key], sync_dist=True)
         
         self.metrics.print()
 

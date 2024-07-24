@@ -68,6 +68,8 @@ def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
         timestamps = sorted([int(file.replace('.feather', ''))
                         for file in os.listdir(Path(mask_dir) / f"{data_mode}-masks" / scene_id)
                         if file.endswith('.feather')])
+        if not os.path.exists(output_dir_ / f'{scene_id}.h5'):
+            continue
         with h5py.File(output_dir_ / f'{scene_id}.h5', 'r+') as f:
             for ts in timestamps:
                 key = str(ts)
@@ -217,6 +219,9 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
         for cnt, ts0 in enumerate(timestamps):
             group = f.create_group(str(ts0))
             pc0, pose0, is_ground_0 = read_pose_pc_ground(data_dir, log_id, ts0, avm)
+            if pc0.shape[0] < 256:
+                print(f'{log_id}/{ts0} has less than 256 points, skip this scenarios. Please check the data if needed.')
+                break
             if cnt == len(timestamps) - 1:
                 create_group_data(group, pc0, is_ground_0.astype(np.bool_), pose0.transform_matrix.astype(np.float32))
             else:
