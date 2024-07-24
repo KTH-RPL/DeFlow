@@ -3,7 +3,8 @@
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
+# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow) and 
+# SeFlow (https://github.com/KTH-RPL/SeFlow) projects.
 # If you find this repo helpful, please cite the respective publication as 
 # listed on the above website.
 
@@ -47,17 +48,20 @@ def main(cfg):
                             collate_fn=collate_fn_pad,
                             pin_memory=True)
                             
-    
     # count gpus, overwrite gpus
     cfg.gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
 
-    # only for logging on folder name.
+    output_dir = HydraConfig.get().runtime.output_dir
+    # overwrite logging folder name for SSL.
     if cfg.loss_fn == 'seflowLoss':
         cfg.output = cfg.output.replace(cfg.model.name, "seflow")
+        output_dir = output_dir.replace(cfg.model.name, "seflow")
         method_name = "seflow"
     else:
         method_name = cfg.model.name
-    output_dir = HydraConfig.get().runtime.output_dir + f"/{cfg.output}"
+
+    # FIXME: hydra output_dir with ddp run will mkdir in the parent folder. Looks like PL and Hydra trying to fix in lib.
+    # print(f"Output Directory: {output_dir} in gpu rank: {torch.cuda.current_device()}")
     Path(os.path.join(output_dir, "checkpoints")).mkdir(parents=True, exist_ok=True)
     
     cfg = DictConfig(OmegaConf.to_container(cfg, resolve=True))

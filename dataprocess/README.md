@@ -34,7 +34,7 @@ s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" sensor/te
 s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
 ```
 
-Then to quickly pre-process the data, we can [read more detail](../preprocess/README.md) on how to generate the pre-processed data for training and evaluation. This will take around 2 hour for the whole dataset (train & val) based on how powerful your CPU is.
+Then to quickly pre-process the data, we can [read these commands](#process) on how to generate the pre-processed data for training and evaluation. This will take around 0.5-2 hour for the whole dataset (train & val) based on how powerful your CPU is.
 
 More [self-supervised data in AV2 LiDAR only](https://www.argoverse.org/av2.html#lidar-link), note: It **does not** include **imagery or 3D annotations**. The dataset is designed to support research into self-supervised learning in the lidar domain, as well as point cloud forecasting.
 ```bash

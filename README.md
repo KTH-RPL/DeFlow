@@ -80,7 +80,7 @@ Note: Prepare raw data and process train data only needed run once for the task.
 ### Data Preparation
 
 Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
-You can download it from [Zenodo](https://zenodo.org/record/12751363) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
+You can download it from [Zenodo](https://zenodo.org/records/12751363/files/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
 
 ```bash
 wget https://zenodo.org/record/12751363/files/demo_data.zip
@@ -89,7 +89,8 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 #### Prepare raw data 
 
-Extract all data to unified h5 format. [Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
+Checking more information (download raw data etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
+[Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
@@ -122,8 +123,10 @@ python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dL
 python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
 ```
 
-Note: You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 20 for faster converge (Through analysis, we also found it had better performance). 
-However, we kept the setting on lr=2e-6 and 50 epochs in the paper experiment for the fair comparison with ZeroFlow where we directly use their provided weights.
+> [!NOTE]  
+> You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 20 for faster converge and better performance. 
+> However, we kept the setting on lr=2e-6 and 50 epochs in (SeFlow & DeFlow) paper experiments for the fair comparison with ZeroFlow where we directly use their provided weights. 
+> We suggest afterward researchers or users to use the setting here (larger lr and smaller epoch) for faster converge and better performance.
 
 ## 2. Evaluation
 
