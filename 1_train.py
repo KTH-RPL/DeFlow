@@ -28,10 +28,19 @@ from pathlib import Path
 from scripts.network.dataloader import HDF5Dataset, collate_fn_pad
 from scripts.pl_model import ModelWrapper
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg):
+def precheck_cfg_valid(cfg):
     if cfg.loss_fn == 'seflowLoss' and cfg.add_seloss is None:
         raise ValueError("Please specify the self-supervised loss items for seflowLoss.")
+    if (cfg.point_cloud_range[3] - cfg.point_cloud_range[0]) % cfg.voxel_size[0] != 0 or \
+       (cfg.point_cloud_range[4] - cfg.point_cloud_range[1]) % cfg.voxel_size[1] != 0 or \
+       (cfg.point_cloud_range[5] - cfg.point_cloud_range[2]) % cfg.voxel_size[2] != 0:
+        # For example: 51.2/0.2=256 good, 51.2/0.3=170.67 wrong.
+        raise ValueError("The voxel size should be able to divide the point cloud range to a INT.")
+    return cfg
+
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main(cfg):
+    precheck_cfg_valid(cfg)
     pl.seed_everything(cfg.seed, workers=True)
 
     train_dataset = HDF5Dataset(cfg.train_data, n_frames=cfg.num_frames, dufo=(cfg.loss_fn == 'seflowLoss'))
