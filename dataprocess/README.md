@@ -121,12 +121,6 @@ All these preprocess scripts will generate the same format `.h5` file. The file 
 File: `[*:logid].h5` file named in logid. Every timestamp is the key of group (f[key]).
 
 ```python
-def process_log(data_dir: Path, mode: str, scene_num_id: int, output_dir: Path, n: Optional[int] = None) :
-    def create_group_data(group, pc, pose, gm = None, flow_0to1=None, flow_valid=None, flow_category=None, ego_motion=None):
-        group.create_dataset('lidar', data=pc.astype(np.float32))
-        group.create_dataset('pose', data=pose.astype(np.float64))
-
-
 def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] = None) :
     def create_group_data(group, pc, gm, pose, flow_0to1=None, flow_valid=None, flow_category=None, ego_motion=None):
         group.create_dataset('lidar', data=pc.astype(np.float32))
@@ -138,7 +132,6 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
             group.create_dataset('flow_is_valid', data=flow_valid.astype(bool))
             group.create_dataset('flow_category_indices', data=flow_category.astype(np.uint8))
             group.create_dataset('ego_motion', data=ego_motion.astype(np.float32))
-
 ```
 
 After preprocessing, all data can use the same dataloader to load the data. As already in our DeFlow code.

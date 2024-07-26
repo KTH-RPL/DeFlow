@@ -13,7 +13,7 @@ Task: Scene Flow Estimation in Autonomous Driving.
 
 🔥 2024/07/02: Check the self-supervised version in our new ECCV'24 [SeFlow](https://github.com/KTH-RPL/SeFlow). The 1st ranking in new leaderboard among self-supervise methods.
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962). 
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12751363). 
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
@@ -94,7 +94,7 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 #### Prepare raw data 
 
-Checking more information (download raw data etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
+Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
 [Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
@@ -118,7 +118,7 @@ python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dL
 > However, we kept the setting on lr=2e-6 and 50 epochs in (SeFlow & DeFlow) paper experiments for the fair comparison with ZeroFlow where we directly use their provided weights. 
 > We suggest afterward researchers or users to use the setting here (larger lr and smaller epoch) for faster converge and better performance.
 
-To help community benchmarking, we provide our weights including fastflow3d, deflow in [Zendo](https://zenodo.org/records/12632962). 
+To help community benchmarking, we provide our weights including fastflow3d, deflow in [Zendo](https://zenodo.org/records/12751363). 
 These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
 
 ## 2. Evaluation
@@ -128,7 +128,7 @@ You can view Wandb dashboard for the training and evaluation results or run/subm
 Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/12632962/files/deflow_best.ckpt
+wget https://zenodo.org/records/12751363/files/deflow_best.ckpt
 
 python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
 # it will output a command with absolute path of a zip file for you to submit to leaderboard
@@ -161,7 +161,7 @@ We provide a script to visualize the results of the model. You can specify the c
 
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/12632962/files/deflow_best.ckpt
+wget https://zenodo.org/records/12751363/files/deflow_best.ckpt
 
 python 3_vis.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
