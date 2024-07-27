@@ -35,7 +35,7 @@ You can try following methods in our code without any effort to make your own be
 - [x] [SeFlow](https://arxiv.org/abs/2407.01702) (Ours 🚀): ECCV 2024
 - [x] [DeFlow](https://arxiv.org/abs/2401.16122) (Ours 🚀): ICRA 2024
 - [x] [FastFlow3d](https://arxiv.org/abs/2103.01306): RA-L 2021
-- [x] [ZeroFlow](https://arxiv.org/abs/2305.10424): ICLR 2024, their pre-trained weight can covert into our format easily through [the script](tests/zerof2ours.py).
+- [x] [ZeroFlow](https://arxiv.org/abs/2305.10424): ICLR 2024, their pre-trained weight can covert into our format easily through [the script](tools/zerof2ours.py).
 - [ ] [NSFP](https://arxiv.org/abs/2111.01253): NeurIPS 2021, faster 3x than original version because of [our CUDA speed up](assets/cuda/README.md), same (slightly better) performance. Done coding, public after review.
 - [ ] [FastNSF](https://arxiv.org/abs/2304.09121): ICCV 2023. Done coding, public after review.
 <!-- - [ ] [Flow4D](https://arxiv.org/abs/2407.07995): 1st supervise network in the new leaderboard. Done coding, public after review. -->
@@ -168,11 +168,11 @@ python 3_vis.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/dat
 # Then terminal will tell you the command you need run. For example here is the output of the above:
 Model: DeFlow, Checkpoint from: /home/kin/deflow_best.ckpt
 We already write the estimate flow: deflow_best into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
-python tests/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tools/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 Enjoy! ^v^ ------ 
 
 # Then run the command in the terminal:
-python tests/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tools/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 ```
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/9b265d56-06a9-4300-899c-96047a0da505
