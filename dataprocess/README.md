@@ -140,7 +140,7 @@ Or you can run testing file to visualize the data.
 
 ```bash
 # view gt flow
-python3 tests/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --flow_mode flow
+python3 tools/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --flow_mode flow
 
-python3 tests/scene_flow.py --data_dir /home/kin/data/waymo/preprocess/val --flow_mode flow
+python3 tools/scene_flow.py --data_dir /home/kin/data/waymo/preprocess/val --flow_mode flow
 ```
