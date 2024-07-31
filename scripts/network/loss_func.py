@@ -49,7 +49,7 @@ def seflowLoss(res_dict, timer=None):
     # timer[5][2].start("DynamicChamferDistance")
     dynamic_chamfer_dis = torch.tensor(0.0, device=est_flow.device)
     if have_dynamic_cluster:
-        dynamic_chamfer_dis += MyCUDAChamferDis(pc0_dynamic, pc1_dynamic, truncate_dist=TRUNCATED_DIST)
+        dynamic_chamfer_dis += MyCUDAChamferDis(pseudo_pc1from0[pc0_label>0], pc1_dynamic, truncate_dist=TRUNCATED_DIST)
     # timer[5][2].stop()
 
     # third item loss: exclude static points' flow
