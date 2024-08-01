@@ -4,7 +4,7 @@ checkpoint: /home/kin/model_zoo/deflow.ckpt
 av2_mode: val # [val, test]
 save_res: False # [True, False]
 
-leaderboard_version: 2 # [1, 2]
+leaderboard_version: 1 # [1, 2]
 supervised_flag: True # [True, False], whether you use any label from the dataset
 
 # no need to change

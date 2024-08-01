@@ -49,7 +49,9 @@ def main(cfg):
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)
     trainer.test(model = mymodel, \
-                 dataloaders = DataLoader(HDF5Dataset(cfg.dataset_path, n_frames=checkpoint_params.cfg.num_frames), batch_size=1, shuffle=False))
+                 dataloaders = DataLoader(\
+                     HDF5Dataset(cfg.dataset_path, n_frames=checkpoint_params.cfg.num_frames if 'num_frames' in checkpoint_params.cfg else 2), \
+                    batch_size=1, shuffle=False))
     wandb.finish()
 
 if __name__ == "__main__":
