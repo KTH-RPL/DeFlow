@@ -46,7 +46,11 @@ def main(cfg):
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check: def eval_only_step_(self, batch, res_dict)
     trainer.validate(model = mymodel, \
-                     dataloaders = DataLoader(HDF5Dataset(cfg.dataset_path + f"/{cfg.av2_mode}", n_frames=checkpoint_params.cfg.num_frames, eval=True, leaderboard_version=cfg.leaderboard_version), batch_size=1, shuffle=False))
+                     dataloaders = DataLoader( \
+                                            HDF5Dataset(cfg.dataset_path + f"/{cfg.av2_mode}", \
+                                                        n_frames=checkpoint_params.cfg.num_frames  if 'num_frames' in checkpoint_params.cfg else 2, \
+                                                        eval=True, leaderboard_version=cfg.leaderboard_version), \
+                                            batch_size=1, shuffle=False))
     wandb.finish()
 
 if __name__ == "__main__":
