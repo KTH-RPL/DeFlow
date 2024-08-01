@@ -142,14 +142,14 @@ class ConvGRUDecoder(nn.Module):
     def __init__(self, pseudoimage_channels: int = 64, num_iters: int = 4):
         super().__init__()
 
-        self.offset_encoder = nn.Linear(3, 64)
+        self.offset_encoder = nn.Linear(3, pseudoimage_channels)
 
         # NOTE: voxel feature is hidden input, point offset is input, check paper's Fig. 3
-        self.gru = ConvGRU(input_dim=64, hidden_dim=pseudoimage_channels*2)
+        self.gru = ConvGRU(input_dim=pseudoimage_channels, hidden_dim=pseudoimage_channels*2)
 
         self.decoder = nn.Sequential(
-            nn.Linear(pseudoimage_channels*3, 32), nn.GELU(),
-            nn.Linear(32, 3))
+            nn.Linear(pseudoimage_channels*3, pseudoimage_channels//2), nn.GELU(),
+            nn.Linear(pseudoimage_channels//2, 3))
         self.num_iters = num_iters
 
     def forward_single(self, before_pseudoimage: torch.Tensor,
