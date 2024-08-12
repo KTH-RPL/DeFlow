@@ -21,7 +21,7 @@ from lightning.pytorch.callbacks import (
 )
 
 from omegaconf import DictConfig, OmegaConf
-import hydra, wandb, os
+import hydra, wandb, os, math
 from hydra.core.hydra_config import HydraConfig
 from pathlib import Path
 
@@ -31,11 +31,25 @@ from scripts.pl_model import ModelWrapper
 def precheck_cfg_valid(cfg):
     if cfg.loss_fn == 'seflowLoss' and cfg.add_seloss is None:
         raise ValueError("Please specify the self-supervised loss items for seflowLoss.")
-    if (cfg.point_cloud_range[3] - cfg.point_cloud_range[0]) % cfg.voxel_size[0] != 0 or \
-       (cfg.point_cloud_range[4] - cfg.point_cloud_range[1]) % cfg.voxel_size[1] != 0 or \
-       (cfg.point_cloud_range[5] - cfg.point_cloud_range[2]) % cfg.voxel_size[2] != 0:
-        # For example: 51.2/0.2=256 good, 51.2/0.3=170.67 wrong.
-        raise ValueError("The voxel size should be able to divide the point cloud range to a INT.")
+    
+    grid_size = [(cfg.point_cloud_range[3] - cfg.point_cloud_range[0]) * (1/cfg.voxel_size[0]),
+                 (cfg.point_cloud_range[4] - cfg.point_cloud_range[1]) * (1/cfg.voxel_size[1]),
+                 (cfg.point_cloud_range[5] - cfg.point_cloud_range[2]) * (1/cfg.voxel_size[2])]
+    
+    for i, dim_size in enumerate(grid_size):
+        # NOTE(Qingwen):
+        # * the range is divisible to voxel, e.g. 51.2/0.2=256 good, 51.2/0.3=170.67 wrong.
+        # * the grid size to be divisible by 8 (2^3) for three bisections for the UNet.
+        target_divisor = 8
+        if i <= 1:  # Only check x and y dimensions
+            if dim_size % target_divisor != 0:
+                adjusted_dim_size = math.ceil(dim_size / target_divisor) * target_divisor
+                suggest_range_setting = (adjusted_dim_size * cfg.voxel_size[i]) / 2
+                raise ValueError(f"Suggest x/y range setting: {suggest_range_setting:.2f} based on {cfg.voxel_size[i]}")
+        else:
+            if dim_size.is_integer() is False:
+                suggest_range_setting = (math.ceil(dim_size) * cfg.voxel_size[i]) / 2
+                raise ValueError(f"Suggest z range setting: {suggest_range_setting:.2f} or {suggest_range_setting/2:.2f} based on {cfg.voxel_size[i]}")
     return cfg
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
