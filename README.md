@@ -181,15 +181,17 @@ https://github.com/KTH-RPL/DeFlow/assets/35365764/9b265d56-06a9-4300-899c-96047a
 ## Cite & Acknowledgements
 
 ```
-@article{zhang2024deflow,
+@inproceedings{zhang2024deflow,
   author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
-  title={DeFlow: Decoder of Scene Flow Network in Autonomous Driving},
-  journal={arXiv preprint arXiv:2401.16122},
-  year={2024}
+  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)}, 
+  title={{DeFlow}: Decoder of Scene Flow Network in Autonomous Driving}, 
+  year={2024},
+  pages={2105-2111},
+  doi={10.1109/ICRA57147.2024.10610278}
 }
 @article{zhang2024seflow,
   author={Zhang, Qingwen and Yang, Yi and Li, Peizheng and Andersson, Olov and Jensfelt, Patric},
-  title={SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving},
+  title={{SeFlow}: A Self-Supervised Scene Flow Method in Autonomous Driving},
   journal={arXiv preprint arXiv:2407.01702},
   year={2024}
 }
