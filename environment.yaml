@@ -7,8 +7,8 @@ dependencies:
   - pytorch::pytorch=2.0.0
   - pytorch::torchvision
   - pytorch::pytorch-cuda=11.7
+  - nvidia/label/cuda-11.7.0::cuda
   - lightning==2.0.1
-  - nvidia::cudatoolkit=11.7
   - mkl==2024.0.0
   - numba
   - numpy

@@ -59,11 +59,7 @@ mamba env create -f environment.yaml
 CUDA package (need install nvcc compiler), the compile time is around 1-5 minutes:
 ```bash
 mamba activate deflow
-
-# change it if you use different cuda version (I tested 11.3, 11.4, 11.7, 11.8 all works)
-export PATH=/usr/local/cuda-11.7/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
-
+# CUDA already install in python environment. I also tested others version like 11.3, 11.4, 11.7, 11.8 all works
 cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
 ```
 
