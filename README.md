@@ -6,8 +6,10 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 [poster comming soon]
 [video coming soon]
 
+![](assets/docs/seflow_arch.png)
+
 2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by [downloading](https://zenodo.org/records/12751363) demo data or pretrained weight for evaluation. 
-The process script will be public when the paper published. 
+The process script will be public when the paper is published officially. 
 
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12751363) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
@@ -55,10 +57,7 @@ cd SeFlow && mamba env create -f environment.yaml
 CUDA package (need install nvcc compiler), the compile time is around 1-5 minutes:
 ```bash
 mamba activate seflow
-# change it if you use different cuda version (I tested 11.3, 11.4, 11.7, 11.8 all works)
-export PATH=/usr/local/cuda-11.7/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
-
+# CUDA already install in python environment. I also tested others version like 11.3, 11.4, 11.7, 11.8 all works
 cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
 cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
@@ -179,11 +178,13 @@ https://github.com/user-attachments/assets/f031d1a2-2d2f-4947-a01f-834ed1c146e6
   journal={arXiv preprint arXiv:2407.01702},
   year={2024}
 }
-@article{zhang2024deflow,
+@inproceedings{zhang2024deflow,
   author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
-  title={DeFlow: Decoder of Scene Flow Network in Autonomous Driving},
-  journal={arXiv preprint arXiv:2401.16122},
-  year={2024}
+  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)}, 
+  title={{DeFlow}: Decoder of Scene Flow Network in Autonomous Driving}, 
+  year={2024},
+  pages={2105-2111},
+  doi={10.1109/ICRA57147.2024.10610278}
 }
 ```
 
