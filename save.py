@@ -22,7 +22,7 @@ from src.dataset import HDF5Dataset
 from src.trainer import ModelWrapper
 from src.utils import bc
 
-@hydra.main(version_base=None, config_path="conf", config_name="vis")
+@hydra.main(version_base=None, config_path="conf", config_name="save")
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir

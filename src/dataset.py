@@ -149,12 +149,6 @@ class HDF5Dataset(Dataset):
             pc1 = torch.tensor(f[next_timestamp]['lidar'][:][:,:3])
             gm1 = torch.tensor(f[next_timestamp]['ground_mask'][:])
             pose1 = torch.tensor(f[next_timestamp]['pose'][:])
-            # if pc0[~gm0].shape[0] == 0:
-            #     print(f"\nWarning: empty point cloud! scene_id: [{scene_id}, {timestamp}], Check the data!\n")
-            #     return self.__getitem__(index_+1)
-            # elif pc1[~gm1].shape[0] == 0:
-            #     print(f"\nWarning: empty point cloud! scene_id: [{scene_id}, {next_timestamp}], Check the data!\n")
-            #     return self.__getitem__(index_-1)
             res_dict = {
                 'scene_id': scene_id,
                 'timestamp': key,

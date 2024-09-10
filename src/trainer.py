@@ -214,7 +214,7 @@ class ModelWrapper(LightningModule):
 
         if self.save_res:
             print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-            print(f"python tools/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
+            print(f"python tools/visualization.py --res_name '{self.vis_name}' --data_dir {self.dataset_path}")
             print(f"Enjoy! ^v^ ------ \n")
         
     def eval_only_step_(self, batch, res_dict):
@@ -310,5 +310,5 @@ class ModelWrapper(LightningModule):
         self.model.timer.print(random_colors=False, bold=False)
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
         print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-        print(f"python tools/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
+        print(f"python tools/visualization.py --res_name '{self.vis_name}' --data_dir {self.dataset_path}")
         print(f"Enjoy! ^v^ ------ \n")

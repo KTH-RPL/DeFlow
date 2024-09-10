@@ -159,11 +159,11 @@ python save.py checkpoint=/home/kin/seflow_best.ckpt dataset_path=/home/kin/data
 # The output of above command will be like:
 Model: DeFlow, Checkpoint from: /home/kin/model_zoo/v2/seflow_best.ckpt
 We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
-python tools/scene_flow.py --flow_mode 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
+python tools/visualization.py --res_name 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
 Enjoy! ^v^ ------ 
 
 # Then run the command in the terminal:
-python tools/scene_flow.py --flow_mode 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
+python tools/visualization.py --res_name 'seflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/vis
 ```
 
 https://github.com/user-attachments/assets/f031d1a2-2d2f-4947-a01f-834ed1c146e6
