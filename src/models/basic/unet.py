@@ -2,27 +2,7 @@ import torch
 import torch.nn as nn
 
 from typing import Tuple
-
-
-class ConvWithNorms(nn.Module):
-
-    def __init__(self, in_num_channels: int, out_num_channels: int,
-                 kernel_size: int, stride: int, padding: int):
-        super().__init__()
-        self.conv = nn.Conv2d(in_num_channels, out_num_channels, kernel_size,
-                              stride, padding)
-        self.batchnorm = nn.BatchNorm2d(out_num_channels)
-        self.nonlinearity = nn.GELU()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        conv_res = self.conv(x)
-        if conv_res.shape[2] == 1 and conv_res.shape[3] == 1:
-            # This is a hack to get around the fact that batchnorm doesn't support
-            # 1x1 convolutions
-            batchnorm_res = conv_res
-        else:
-            batchnorm_res = self.batchnorm(conv_res)
-        return self.nonlinearity(batchnorm_res)
+from . import ConvWithNorms
 
 
 class BilinearDecoder(nn.Module):

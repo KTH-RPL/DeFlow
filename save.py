@@ -18,9 +18,9 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
-from scripts.network.dataloader import HDF5Dataset
-from scripts.pl_model import ModelWrapper
-from scripts.utils import bc
+from src.dataset import HDF5Dataset
+from src.trainer import ModelWrapper
+from src.utils import bc
 
 @hydra.main(version_base=None, config_path="conf", config_name="vis")
 def main(cfg):

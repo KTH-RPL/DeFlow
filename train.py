@@ -14,7 +14,7 @@
 import torch
 from torch.utils.data import DataLoader
 import lightning.pytorch as pl
-from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint
@@ -25,8 +25,8 @@ import hydra, wandb, os, math
 from hydra.core.hydra_config import HydraConfig
 from pathlib import Path
 
-from scripts.network.dataloader import HDF5Dataset, collate_fn_pad
-from scripts.pl_model import ModelWrapper
+from src.dataset import HDF5Dataset, collate_fn_pad
+from src.trainer import ModelWrapper
 
 def precheck_cfg_valid(cfg):
     if cfg.loss_fn == 'seflowLoss' and cfg.add_seloss is None:
@@ -97,19 +97,26 @@ def main(cfg):
             auto_insert_metric_name=False,
             monitor=cfg.model.val_monitor,
             mode="min",
-            save_top_k=cfg.save_top_model
+            save_top_k=cfg.save_top_model,
+            save_last=True,
         ),
         LearningRateMonitor(logging_interval="epoch")
     ]
 
-    wandb_logger = WandbLogger(save_dir=output_dir,
-                               entity="kth-rpl",
-                               project=f"{cfg.wandb_project_name}", 
-                               name=f"{cfg.output}",
-                               offline=(cfg.wandb_mode == "offline"),
-                               log_model=(True if cfg.wandb_mode == "online" else False))
-    
-    trainer = pl.Trainer(logger=wandb_logger,
+    if cfg.wandb_mode != "disabled":
+        logger = WandbLogger(save_dir=output_dir,
+                            entity="kth-rpl",
+                            project=f"{cfg.wandb_project_name}", 
+                            name=f"{cfg.output}",
+                            offline=(cfg.wandb_mode == "offline"),
+                            log_model=(True if cfg.wandb_mode == "online" else False))
+        logger.watch(model, log_graph=False)
+    else:
+        # check local tensorboard logging: tensorboard --logdir logs/jobs/{log folder}
+        logger = TensorBoardLogger(save_dir=output_dir, name="logs")
+
+
+    trainer = pl.Trainer(logger=logger,
                          log_every_n_steps=50,
                          accelerator="gpu",
                          devices=cfg.gpus,
@@ -120,7 +127,7 @@ def main(cfg):
                          max_epochs=cfg.epochs,
                          sync_batchnorm=cfg.sync_bn)
     
-    wandb_logger.watch(model, log_graph=False)
+    
     if trainer.global_rank == 0:
         print("\n"+"-"*40)
         print("Initiating wandb and trainer successfully.  ^V^ ")

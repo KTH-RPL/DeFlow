@@ -23,11 +23,11 @@ echo "Copy ${SOURCE} to ${DEST} Total time: ${elapsed} seconds"
 echo "Start training..."
 
 # ====> leaderboard model
-# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python 2_eval.py \
+# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python eval.py \
 #     wandb_mode=online dataset_path=/scratch/local/av2/sensor \
 #     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/seflow/logs/wandb/seflow-10086990/checkpoints/epoch_19_seflow.ckpt \
 #     av2_mode=test save_res=True
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python 2_eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/seflow/logs/wandb/seflow-10086990/checkpoints/epoch_19_seflow.ckpt

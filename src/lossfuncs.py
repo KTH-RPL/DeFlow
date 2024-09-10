@@ -12,7 +12,7 @@
 import torch
 from assets.cuda.chamfer3D import nnChamferDis
 MyCUDAChamferDis = nnChamferDis()
-from scripts.utils.av2_eval import CATEGORY_TO_INDEX, BUCKETED_METACATAGORIES
+from src.utils.av2_eval import CATEGORY_TO_INDEX, BUCKETED_METACATAGORIES
 
 # NOTE(Qingwen 24/07/06): squared, so it's sqrt(4) = 2m, in 10Hz the vel = 20m/s ~ 72km/h
 # If your scenario is different, may need adjust this TRUNCATED to 80-120km/h vel.

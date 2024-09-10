@@ -1,28 +1,6 @@
 import torch
 import torch.nn as nn
-import numpy as np
-
-
-class ConvWithNorms(nn.Module):
-
-    def __init__(self, num_channels: int, kernel_size: int, stride: int,
-                 padding: int):
-        super().__init__()
-        self.conv = nn.Conv2d(num_channels, num_channels, kernel_size, stride,
-                              padding)
-        self.batchnorm = nn.BatchNorm2d(num_channels)
-        self.gelu = nn.GELU()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        conv_res = self.conv(x)
-        if conv_res.shape[2] == 1 and conv_res.shape[3] == 1:
-            # This is a hack to get around the fact that batchnorm doesn't support
-            # 1x1 convolutions
-            batchnorm_res = conv_res
-        else:
-            batchnorm_res = self.batchnorm(conv_res)
-        return self.gelu(batchnorm_res)
-
+from . import ConvWithNorms
 
 class ConvTransposeWithNorms(nn.Module):
 

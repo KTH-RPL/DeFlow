@@ -24,10 +24,10 @@ from omegaconf import OmegaConf,open_dict
 import os, sys, time, h5py
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
-from scripts.utils.mics import import_func, weights_init, zip_res
-from scripts.utils.av2_eval import write_output_file
-from scripts.network.models.basic import cal_pose0to1
-from scripts.network.official_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
+from src.utils.mics import import_func, weights_init, zip_res
+from src.utils.av2_eval import write_output_file
+from src.models.basic import cal_pose0to1
+from src.utils.eval_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
 
 # debugging tools
 # import faulthandler
@@ -56,7 +56,7 @@ class ModelWrapper(LightningModule):
         self.model = instantiate(cfg.model.target)
         self.model.apply(weights_init)
         
-        self.loss_fn = import_func("scripts.network.loss_func."+cfg.loss_fn) if 'loss_fn' in cfg else None
+        self.loss_fn = import_func("src.lossfuncs."+cfg.loss_fn) if 'loss_fn' in cfg else None
         self.add_seloss = cfg.add_seloss if 'add_seloss' in cfg else None
         self.cfg_loss_name = cfg.loss_fn if 'loss_fn' in cfg else None
         

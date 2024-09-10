@@ -40,7 +40,7 @@ def main(
 cd /proj/berzelius-2023-154/users/x_qinzh/seflow
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/proj/berzelius-2023-154/users/x_qinzh/mambaforge/lib
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python 0_process.py \\
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/seflow/bin/python process.py \\
     --data_dir {data_dir} \\
     --interval {interval} \\
     --scene_range {scene_range[0]},{scene_range[1]}

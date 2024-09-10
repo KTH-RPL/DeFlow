@@ -80,6 +80,6 @@ If you want to contribute to new model, here are tips you can follow:
 1. Dataloader: we believe all data could be process to `.h5`, we named as different scene and inside a scene, the key of each data is timestamp. Check [dataprocess/README.md](../dataprocess/README.md#process) for more details.
 2. Model: All model files can be found [here: scripts/network/models](../scripts/network/models). You can view deflow and fastflow3d to know how to implement a new model.
 3. Loss: All loss files can be found [here: scripts/network/loss_func.py](../scripts/network/loss_func.py). There are three loss functions already inside the file, you can add a new one following the same pattern.
-4. Training: Once you have implemented the model, you can add the model to the config file [here: conf/model](../conf/model) and train the model using the command `python 1_train.py model=your_model_name`. One more note here may: if your res_dict from model output is different, you may need add one pattern in `def training_step` and `def validation_step`.
+4. Training: Once you have implemented the model, you can add the model to the config file [here: conf/model](../conf/model) and train the model using the command `python train.py model=your_model_name`. One more note here may: if your res_dict from model output is different, you may need add one pattern in `def training_step` and `def validation_step`.
 
 All others like eval and vis will be changed according to the model you implemented as you follow the above steps.

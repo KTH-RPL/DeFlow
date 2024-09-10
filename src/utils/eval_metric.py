@@ -18,7 +18,7 @@ from tabulate import tabulate
 
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '../..' ))
 sys.path.append(BASE_DIR)
-from scripts.utils.av2_eval import compute_metrics, compute_bucketed_epe, CLOSE_DISTANCE_THRESHOLD
+from src.utils.av2_eval import compute_metrics, compute_bucketed_epe, CLOSE_DISTANCE_THRESHOLD
 
 
 # EPE Three-way: Foreground Dynamic, Background Dynamic, Background Static

@@ -18,8 +18,8 @@ import open3d as o3d
 import os, sys
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
-from scripts.utils.mics import HDF5Data, flow_to_rgb
-from scripts.utils.o3d_view import MyVisualizer, color_map
+from src.utils.mics import HDF5Data, flow_to_rgb
+from src.utils.o3d_view import MyVisualizer, color_map
 
 
 VIEW_FILE = f"{BASE_DIR}/assets/view/av2.json"

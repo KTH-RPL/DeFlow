@@ -20,13 +20,13 @@ We directly follow our previous work [code structure](https://github.com/KTH-RPL
 - `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
   [Dataset we included now: Argoverse 2 and Waymo.  more on the way: Nuscenes, custom data.]
   
-- `0_process.py`: process data with save dufomap, cluster labels inside file. Only needed for training.
+- `process.py`: process data with save dufomap, cluster labels inside file. Only needed once for training.
 
-- `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
+- `train.py`: Train the model and get model checkpoints. Pls remember to check the config.
 
-- `2_eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
+- `eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
 
-- `3_vis.py` : For visualization of the results with a video.
+- `save.py` : For visualization of the results with a video.
 
 <details> <summary>🎁 <b>One repository, All methods!</b> </summary>
 <!-- <br> -->
@@ -101,7 +101,7 @@ python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir 
 Process train data for self-supervised learning. Only training data needs this step. [Runtime: Normally need 15 hours for my desktop, 3 hours for the cluster with five available nodes parallel running.]
 
 ```bash
-python 0_process.py --data_dir /home/kin/data/av2/preprocess_v2/sensor/train --scene_range 0,701
+python process.py --data_dir /home/kin/data/av2/preprocess_v2/sensor/train --scene_range 0,701
 ```
 
 ### Train the model
@@ -109,7 +109,7 @@ python 0_process.py --data_dir /home/kin/data/av2/preprocess_v2/sensor/train --s
 Train SeFlow needed to specify the loss function, we set the config of our best model in the leaderboard. [Runtime: Around 11 hours in 4x A100 GPUs.]
 
 ```bash
-python 1_train.py model=deflow lr=2e-4 epochs=9 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
+python train.py model=deflow lr=2e-4 epochs=9 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
 ```
 
 Or you can directly download the pre-trained weight from [Zenodo](https://zenodo.org/records/12751363/files/seflow_best.ckpt) and skip the training step. 
@@ -118,8 +118,8 @@ Or you can directly download the pre-trained weight from [Zenodo](https://zenodo
 
 You can also train the supervised baseline model in our paper with the following command. [Runtime: Around 10 hours in 4x A100 GPUs.] 
 ```bash
-python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
-python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
+python train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
+python train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
 ```
 
 > [!NOTE]  
@@ -138,11 +138,11 @@ Since in training, we save all hyper-parameters and model checkpoints, the only 
 wget https://zenodo.org/records/12751363/files/seflow_best.ckpt
 
 # it will directly prints all metric
-python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=val
+python eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=val
 
 # it will output the av2_submit.zip or av2_submit_v2.zip for you to submit to leaderboard
-python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=1
-python 2_eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=2
+python eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=1
+python eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=test leaderboard_version=2
 ```
 
 And the terminal will output the command for you to submit the result to the online leaderboard. You can follow [this section for evalai](https://github.com/KTH-RPL/DeFlow?tab=readme-ov-file#2-evaluation).
@@ -154,7 +154,7 @@ Check all detailed result files (presented in our paper Table 1) in [this discus
 We provide a script to visualize the results of the model also. You can specify the checkpoint path and the data path to visualize the results. The step is quickly similar to evaluation.
 
 ```bash
-python 3_vis.py checkpoint=/home/kin/seflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess_v2/sensor/vis
+python save.py checkpoint=/home/kin/seflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess_v2/sensor/vis
 
 # The output of above command will be like:
 Model: DeFlow, Checkpoint from: /home/kin/model_zoo/v2/seflow_best.ckpt
