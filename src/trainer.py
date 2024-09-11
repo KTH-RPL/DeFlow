@@ -141,7 +141,7 @@ class ModelWrapper(LightningModule):
             for key in res_loss:
                 loss_logger[key] += res_loss[key]
 
-        self.log("trainer/loss", total_loss/batch_sizes, sync_dist=True, batch_size=self.batch_size)
+        self.log("trainer/loss", total_loss/batch_sizes, sync_dist=True, batch_size=self.batch_size, prog_bar=True)
         if self.add_seloss is not None:
             for key in loss_logger:
                 self.log(f"trainer/{key}", loss_logger[key]/batch_sizes, sync_dist=True, batch_size=self.batch_size)

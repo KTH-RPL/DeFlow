@@ -16,7 +16,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import h5py, os, pickle, argparse, sys
 from tqdm import tqdm
-BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '../..' ))
+BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 
 def collate_fn_pad(batch):
