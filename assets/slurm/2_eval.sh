@@ -30,14 +30,14 @@ echo "Start training..."
 #     av2_mode=test save_res=True
 
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10086990/checkpoints/epoch_49_fastflow3d.ckpt
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10088873/checkpoints/epoch_49_fastflow3d.ckpt
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10088874/checkpoints/epoch_49_fastflow3d.ckpt

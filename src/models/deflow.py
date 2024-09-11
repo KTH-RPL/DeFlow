@@ -13,7 +13,7 @@ import torch.nn as nn
 import dztimer, torch
 
 from .basic.unet import FastFlow3DUNet
-from .basic.embedder_model import DynamicEmbedder
+from .basic.encoder import DynamicEmbedder
 from .basic.decoder import LinearDecoder, ConvGRUDecoder
 from .basic import cal_pose0to1
 

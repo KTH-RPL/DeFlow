@@ -76,20 +76,16 @@ cd DeFlow && git submodule update --init --recursive
 mamba env create -f assets/environment.yml
 ```
 
-Install mmcv lite version from us: [~5 mins] needed CUDA inside the env, echo ${PATH}
-
+CUDA package (nvcc compiler already installed through conda), the compile time is around 1-5 minutes:
 ```bash
-# change it if you use different cuda version (I tested 11.3, 11.4, 11.7, 11.8 all works)
-export PATH=/usr/local/cuda-11.7/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH
-
+mamba activate seflow
 cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
 ```
 
 
 Checking the environment:
 ```bash
-mamba activate deflow
+mamba activate seflow
 python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.version.cuda)"
 python -c "import lightning.pytorch as pl"
 python -c "from assets.cuda.mmcv import Voxelization, DynamicScatter;print('success test on mmcv package')"
@@ -115,8 +111,8 @@ python -c "from assets.cuda.mmcv import Voxelization, DynamicScatter;print('succ
 
 If you want to contribute to new model, here are tips you can follow:
 1. Dataloader: we believe all data could be process to `.h5`, we named as different scene and inside a scene, the key of each data is timestamp. Check [dataprocess/README.md](../dataprocess/README.md#process) for more details.
-2. Model: All model files can be found [here: scripts/network/models](../scripts/network/models). You can view deflow and fastflow3d to know how to implement a new model.
-3. Loss: All loss files can be found [here: scripts/network/loss_func.py](../scripts/network/loss_func.py). There are three loss functions already inside the file, you can add a new one following the same pattern.
-4. Training: Once you have implemented the model, you can add the model to the config file [here: conf/model](../conf/model) and train the model using the command `python 1_train.py model=your_model_name`. One more note here may: if your res_dict from model output is different, you may need add one pattern in `def training_step` and `def validation_step`.
+2. Model: All model files can be found [here: src/models](../src/models). You can view deflow and fastflow3d to know how to implement a new model. Don't forget to add to the `__init__.py` [file to import class](../src/models/__init__.py).
+3. Loss: All loss files can be found [here: src/lossfuncs.py](../src/lossfuncs.py). There are three loss functions already inside the file, you can add a new one following the same pattern.
+4. Training: Once you have implemented the model, you can add the model to the config file [here: conf/model](../conf/model) and train the model using the command `python train.py model=your_model_name`. One more note here may: if your res_dict from model output is different, you may need add one pattern in `def training_step` and `def validation_step`.
 
 All others like eval and vis will be changed according to the model you implemented as you follow the above steps.

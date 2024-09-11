@@ -1,41 +1,30 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import List, Tuple
 
+from assets.cuda.mmcv import Voxelization
 from assets.cuda.mmcv import DynamicScatter
 
-
-class HardSimpleVFE(nn.Module):
-    """Simple voxel feature encoder used in SECOND.
-
-    It simply averages the values of points in a voxel.
-
+def get_paddings_indicator(actual_num, max_num, axis=0):
+    """Create boolean mask by actually number of a padded tensor.
     Args:
-        num_features (int, optional): Number of features to use. Default: 4.
+        actual_num (torch.Tensor): Actual number of points in each voxel.
+        max_num (int): Max number of points in each voxel
+    Returns:
+        torch.Tensor: Mask indicates which points are valid inside a voxel.
     """
-
-    def __init__(self, num_features=4):
-        super(HardSimpleVFE, self).__init__()
-        self.num_features = num_features
-
-    def forward(self, features, num_points, coors):
-        """Forward function.
-
-        Args:
-            features (torch.Tensor): Point features in shape
-                (N, M, 3(4)). N is the number of voxels and M is the maximum
-                number of points inside a single voxel.
-            num_points (torch.Tensor): Number of points in each voxel,
-                 shape (N, ).
-            coors (torch.Tensor): Coordinates of voxels.
-
-        Returns:
-            torch.Tensor: Mean of points inside each voxel in shape (N, 3(4))
-        """
-        points_mean = features[:, :, :self.num_features].sum(
-            dim=1, keepdim=False) / num_points.type_as(features).view(-1, 1)
-        return points_mean.contiguous()
-
+    actual_num = torch.unsqueeze(actual_num, axis + 1)
+    # tiled_actual_num: [N, M, 1]
+    max_num_shape = [1] * len(actual_num.shape)
+    max_num_shape[axis + 1] = -1
+    max_num = torch.arange(max_num, dtype=torch.int,
+                           device=actual_num.device).view(max_num_shape)
+    # tiled_actual_num: [[3,3,3,3,3], [4,4,4,4,4], [2,2,2,2,2]]
+    # tiled_max_num: [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4]]
+    paddings_indicator = actual_num.int() > max_num
+    # paddings_indicator shape: [batch_size, max_num]
+    return paddings_indicator
 
 class PFNLayer(nn.Module):
     """Pillar Feature Net Layer.
@@ -106,28 +95,98 @@ class PFNLayer(nn.Module):
             x_concatenated = torch.cat([x, x_repeat], dim=2)
             return x_concatenated
 
+class PointPillarsScatter(nn.Module):
+    """Point Pillar's Scatter.
 
-def get_paddings_indicator(actual_num, max_num, axis=0):
-    """Create boolean mask by actually number of a padded tensor.
+    Converts learned features from dense tensor to sparse pseudo image.
+
     Args:
-        actual_num (torch.Tensor): Actual number of points in each voxel.
-        max_num (int): Max number of points in each voxel
-    Returns:
-        torch.Tensor: Mask indicates which points are valid inside a voxel.
+        in_channels (int): Channels of input features.
+        output_shape (list[int]): Required output shape of features.
     """
-    actual_num = torch.unsqueeze(actual_num, axis + 1)
-    # tiled_actual_num: [N, M, 1]
-    max_num_shape = [1] * len(actual_num.shape)
-    max_num_shape[axis + 1] = -1
-    max_num = torch.arange(max_num, dtype=torch.int,
-                           device=actual_num.device).view(max_num_shape)
-    # tiled_actual_num: [[3,3,3,3,3], [4,4,4,4,4], [2,2,2,2,2]]
-    # tiled_max_num: [[0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4]]
-    paddings_indicator = actual_num.int() > max_num
-    # paddings_indicator shape: [batch_size, max_num]
-    return paddings_indicator
 
+    def __init__(self, in_channels, output_shape):
+        super().__init__()
+        self.output_shape = output_shape
+        self.ny = output_shape[0]
+        self.nx = output_shape[1]
+        self.in_channels = in_channels
+        self.fp16_enabled = False
 
+    def forward(self, voxel_features, coors, batch_size=None):
+        """Foraward function to scatter features."""
+        # TODO: rewrite the function in a batch manner
+        # no need to deal with different batch cases
+        if batch_size is not None:
+            return self.forward_batch(voxel_features, coors, batch_size)
+        else:
+            return self.forward_single(voxel_features, coors)
+
+    def forward_single(self, voxel_features, coors):
+        """Scatter features of single sample.
+
+        Args:
+            voxel_features (torch.Tensor): Voxel features in shape (N, M, C).
+            coors (torch.Tensor): Coordinates of each voxel.
+        """
+        # Create the canvas for this sample
+        canvas = torch.zeros(
+            self.in_channels,
+            self.nx * self.ny,
+            dtype=voxel_features.dtype,
+            device=voxel_features.device)
+
+        indices = coors[:, 1] * self.nx + coors[:, 2]
+        indices = indices.long()
+        voxels = voxel_features.t()
+        # Now scatter the blob back to the canvas.
+        canvas[:, indices] = voxels
+        # Undo the column stacking to final 4-dim tensor
+        canvas = canvas.view(1, self.in_channels, self.ny, self.nx)
+        return canvas
+
+    def forward_batch(self, voxel_features, coors, batch_size):
+        """Scatter features of single sample.
+
+        Args:
+            voxel_features (torch.Tensor): Voxel features in shape (N, M, C).
+            coors (torch.Tensor): Coordinates of each voxel in shape (N, 4).
+                The first column indicates the sample ID.
+            batch_size (int): Number of samples in the current batch.
+        """
+        # batch_canvas will be the final output.
+        batch_canvas = []
+        for batch_itt in range(batch_size):
+            # Create the canvas for this sample
+            canvas = torch.zeros(
+                self.in_channels,
+                self.nx * self.ny,
+                dtype=voxel_features.dtype,
+                device=voxel_features.device)
+
+            # Only include non-empty pillars
+            batch_mask = coors[:, 0] == batch_itt
+            this_coors = coors[batch_mask, :]
+            indices = this_coors[:, 2] * self.nx + this_coors[:, 3]
+            indices = indices.type(torch.long)
+            voxels = voxel_features[batch_mask, :]
+            voxels = voxels.t()
+
+            # Now scatter the blob back to the canvas.
+            canvas[:, indices] = voxels
+
+            # Append to a list for later stacking.
+            batch_canvas.append(canvas)
+
+        # Stack to 3-dim tensor (batch-size, in_channels, nrows*ncols)
+        batch_canvas = torch.stack(batch_canvas, 0)
+
+        # Undo the column stacking to final 4-dim tensor
+        batch_canvas = batch_canvas.view(batch_size, self.in_channels, self.ny,
+                                         self.nx)
+
+        return batch_canvas
+    
 class PillarFeatureNet(nn.Module):
     """Pillar Feature Net.
     The network prepares the pillar features and performs forward pass
@@ -248,7 +307,6 @@ class PillarFeatureNet(nn.Module):
             features = pfn(features, num_points)
 
         return features.squeeze(1)
-
 
 class DynamicPillarFeatureNet(PillarFeatureNet):
     """Pillar Feature Net using dynamic voxelization.
@@ -414,3 +472,117 @@ class DynamicPillarFeatureNet(PillarFeatureNet):
                 features = torch.cat([point_feats, feat_per_point], dim=1)
 
         return voxel_feats, voxel_coors, point_feats
+
+class HardVoxelizer(nn.Module):
+
+    def __init__(self, voxel_size, point_cloud_range,
+                 max_points_per_voxel: int):
+        super().__init__()
+        assert max_points_per_voxel > 0, f"max_points_per_voxel must be > 0, got {max_points_per_voxel}"
+
+        self.voxelizer = Voxelization(voxel_size,
+                                      point_cloud_range,
+                                      max_points_per_voxel,
+                                      deterministic=False)
+
+    def forward(self, points: torch.Tensor):
+        assert isinstance(
+            points,
+            torch.Tensor), f"points must be a torch.Tensor, got {type(points)}"
+        not_nan_mask = ~torch.isnan(points).any(dim=2)
+        return {"voxel_coords": self.voxelizer(points[not_nan_mask])}
+
+class DynamicVoxelizer(nn.Module):
+
+    def __init__(self, voxel_size, point_cloud_range):
+        super().__init__()
+        self.voxel_size = voxel_size
+        self.point_cloud_range = point_cloud_range
+        self.voxelizer = Voxelization(voxel_size,
+                                      point_cloud_range,
+                                      max_num_points=-1)
+
+    def _get_point_offsets(self, points: torch.Tensor,
+                           voxel_coords: torch.Tensor):
+
+        point_cloud_range = torch.tensor(self.point_cloud_range,
+                                         dtype=points.dtype,
+                                         device=points.device)
+        min_point = point_cloud_range[:3]
+        voxel_size = torch.tensor(self.voxel_size,
+                                  dtype=points.dtype,
+                                  device=points.device)
+
+        # Voxel coords are in the form Z, Y, X :eyeroll:, convert to X, Y, Z
+        voxel_coords = voxel_coords[:, [2, 1, 0]]
+
+        # Offsets are computed relative to min point
+        voxel_centers = voxel_coords * voxel_size + min_point + voxel_size / 2
+
+        return points - voxel_centers
+
+    def forward(
+            self,
+            points: torch.Tensor) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+
+        batch_results = []
+        for batch_idx in range(len(points)):
+            batch_points = points[batch_idx]
+            valid_point_idxes = torch.arange(batch_points.shape[0],
+                                             device=batch_points.device)
+            not_nan_mask = ~torch.isnan(batch_points).any(dim=1)
+            batch_non_nan_points = batch_points[not_nan_mask]
+            valid_point_idxes = valid_point_idxes[not_nan_mask]
+            batch_voxel_coords = self.voxelizer(batch_non_nan_points)
+            # If any of the coords are -1, then the point is not in the voxel grid and should be discarded
+            batch_voxel_coords_mask = (batch_voxel_coords != -1).all(dim=1)
+
+            valid_batch_voxel_coords = batch_voxel_coords[
+                batch_voxel_coords_mask]
+            valid_batch_non_nan_points = batch_non_nan_points[
+                batch_voxel_coords_mask]
+            valid_point_idxes = valid_point_idxes[batch_voxel_coords_mask]
+
+            point_offsets = self._get_point_offsets(valid_batch_non_nan_points,
+                                                    valid_batch_voxel_coords)
+
+            result_dict = {
+                "points": valid_batch_non_nan_points,
+                "voxel_coords": valid_batch_voxel_coords,
+                "point_idxes": valid_point_idxes,
+                "point_offsets": point_offsets
+            }
+
+            batch_results.append(result_dict)
+        return batch_results
+
+class DynamicEmbedder(nn.Module):
+
+    def __init__(self, voxel_size, pseudo_image_dims, point_cloud_range,
+                 feat_channels: int) -> None:
+        super().__init__()
+        self.voxelizer = DynamicVoxelizer(voxel_size=voxel_size,
+                                          point_cloud_range=point_cloud_range)
+        self.feature_net = DynamicPillarFeatureNet(
+            in_channels=3,
+            feat_channels=(feat_channels, ),
+            point_cloud_range=point_cloud_range,
+            voxel_size=voxel_size,
+            mode='avg')
+        self.scatter = PointPillarsScatter(in_channels=feat_channels,
+                                           output_shape=pseudo_image_dims)
+
+    def forward(self, points: torch.Tensor) -> torch.Tensor:
+
+        # List of points and coordinates for each batch
+        voxel_info_list = self.voxelizer(points)
+
+        pseudoimage_lst = []
+        for voxel_info_dict in voxel_info_list:
+            points = voxel_info_dict['points']
+            coordinates = voxel_info_dict['voxel_coords']
+            voxel_feats, voxel_coors, _ = self.feature_net(points, coordinates)
+            pseudoimage = self.scatter(voxel_feats, voxel_coors)
+            pseudoimage_lst.append(pseudoimage)
+        # Concatenate the pseudoimages along the batch dimension
+        return torch.cat(pseudoimage_lst, dim=0), voxel_info_list

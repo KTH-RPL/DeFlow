@@ -24,10 +24,10 @@ from omegaconf import OmegaConf,open_dict
 import os, sys, time, h5py
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
-from scripts.utils.mics import import_func, weights_init, zip_res
-from scripts.utils.av2_eval import write_output_file
-from scripts.network.models.basic import cal_pose0to1
-from scripts.network.official_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
+from src.utils.mics import import_func, weights_init, zip_res
+from src.utils.av2_eval import write_output_file
+from src.models.basic import cal_pose0to1
+from src.utils.eval_metric import OfficialMetrics, evaluate_leaderboard, evaluate_leaderboard_v2
 
 # debugging tools
 # import faulthandler
@@ -56,7 +56,7 @@ class ModelWrapper(LightningModule):
         self.model = instantiate(cfg.model.target)
         self.model.apply(weights_init)
         
-        self.loss_fn = import_func("scripts.network.loss_func."+cfg.loss_fn) if 'loss_fn' in cfg else None
+        self.loss_fn = import_func("src.lossfuncs."+cfg.loss_fn) if 'loss_fn' in cfg else None
         self.add_seloss = cfg.add_seloss if 'add_seloss' in cfg else None
         self.cfg_loss_name = cfg.loss_fn if 'loss_fn' in cfg else None
         
@@ -141,7 +141,7 @@ class ModelWrapper(LightningModule):
             for key in res_loss:
                 loss_logger[key] += res_loss[key]
 
-        self.log("trainer/loss", total_loss/batch_sizes, sync_dist=True, batch_size=self.batch_size)
+        self.log("trainer/loss", total_loss/batch_sizes, sync_dist=True, batch_size=self.batch_size, prog_bar=True)
         if self.add_seloss is not None:
             for key in loss_logger:
                 self.log(f"trainer/{key}", loss_logger[key]/batch_sizes, sync_dist=True, batch_size=self.batch_size)
@@ -214,7 +214,7 @@ class ModelWrapper(LightningModule):
 
         if self.save_res:
             print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-            print(f"python tools/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
+            print(f"python tools/visualization.py --res_name '{self.vis_name}' --data_dir {self.dataset_path}")
             print(f"Enjoy! ^v^ ------ \n")
         
     def eval_only_step_(self, batch, res_dict):
@@ -310,5 +310,5 @@ class ModelWrapper(LightningModule):
         self.model.timer.print(random_colors=False, bold=False)
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
         print(f"We already write the flow_est into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:")
-        print(f"python tools/scene_flow.py --flow_mode '{self.vis_name}' --data_dir {self.dataset_path}")
+        print(f"python tools/visualization.py --res_name '{self.vis_name}' --data_dir {self.dataset_path}")
         print(f"Enjoy! ^v^ ------ \n")

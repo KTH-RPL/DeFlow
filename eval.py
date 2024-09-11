@@ -14,11 +14,20 @@ import torch
 from torch.utils.data import DataLoader
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
-from scripts.network.dataloader import HDF5Dataset
-from scripts.pl_model import ModelWrapper
+from src.dataset import HDF5Dataset
+from src.trainer import ModelWrapper
+
+def precheck_cfg_valid(cfg):
+    if os.path.exists(cfg.dataset_path + f"/{cfg.av2_mode}") is False:
+        raise ValueError(f"Dataset {cfg.dataset_path}/{cfg.av2_mode} does not exist. Please check the path.")
+    if cfg.supervised_flag not in [True, False]:
+        raise ValueError(f"Supervised flag {cfg.supervised_flag} is not valid. Please set it to True or False.")
+    if cfg.leaderboard_version not in [1, 2]:
+        raise ValueError(f"Leaderboard version {cfg.leaderboard_version} is not valid. Please set it to 1 or 2.")
+    return cfg
 
 @hydra.main(version_base=None, config_path="conf", config_name="eval")
 def main(cfg):
@@ -35,7 +44,7 @@ def main(cfg):
     cfg.model.update(checkpoint_params.cfg.model)
     
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
-    print(f"\n---LOG[eval]: Loaded model from {cfg.checkpoint}. The model is {checkpoint_params.cfg.model.name}.\n")
+    print(f"\n---LOG[eval]: Loaded model from {cfg.checkpoint}. The backbone network is {checkpoint_params.cfg.model.name}.\n")
 
     wandb_logger = WandbLogger(save_dir=output_dir,
                                entity="kth-rpl",

@@ -25,11 +25,11 @@ echo "Copy ${SOURCE} to ${DEST} Total time: ${elapsed} seconds"
 echo "Start training..."
 
 # ====> leaderboard model = [fastflow3d, deflow]
-# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 1_train.py \
+# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python train.py \
 #     slurm_id=$SLURM_JOB_ID wandb_mode=online train_data=/scratch/local/av2/sensor/train val_data=/scratch/local/av2/sensor/val \
 #     num_workers=16 model=deflow lr=2e-6 epochs=50 batch_size=10 loss_fn=deflowLoss
 
-# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 1_train.py \
+# /proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python train.py \
 #     slurm_id=$SLURM_JOB_ID wandb_mode=online train_data=/scratch/local/av2/sensor/train val_data=/scratch/local/av2/sensor/val \
 #     num_workers=16 model=fastflow3d lr=2e-6 epochs=50 batch_size=16 loss_fn=ff3dLoss
 

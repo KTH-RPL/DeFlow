@@ -1,7 +1,7 @@
 name: deflow
 
 target:
-  _target_: scripts.network.models.deflow.DeFlow
+  _target_: src.models.DeFlow
   decoder_option: gru # choices: [linear, gru]
   num_iters: 4
   voxel_size: ${voxel_size}

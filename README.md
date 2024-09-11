@@ -21,11 +21,11 @@ Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualiza
 - `dataprocess/extract_*.py` : pre-process data before training to speed up the whole training time. 
   [Dataset we included now: Argoverse 2 and Waymo, more on the way: Nuscenes, custom data.]
   
-- `1_train.py`: Train the model and get model checkpoints. Pls remember to check the config.
+- `train.py`: Train the model and get model checkpoints. Pls remember to check the config.
 
-- `2_eval.py` : Evaluate the model on the validation/test set. And also upload to online leaderboard.
+- `eval.py` : Evaluate the model on the validation/test set. And also output the zip file to upload to online leaderboard.
 
-- `3_vis.py` : For visualization of the results with a video.
+- `save.py` : Will save result into h5py file, using [tool/visualization.py] to show results with interactive window.
 
 
 <details> <summary>🎁 <b>One repository, All methods!</b> </summary>
@@ -105,8 +105,8 @@ All local benchmarking methods and ablation studies can be done through command 
 Best fine-tuned model train with following command by other default config in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml), if you will set wandb_mode=online, maybe change all `entity="kth-rpl"` to your own account name.
 
 ```bash
-python 1_train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
-python 1_train.py model=fastflow3d lr=2e-4 epochs=20 batch_size=16 loss_fn=ff3dLoss
+python train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
+python train.py model=fastflow3d lr=4e-5 epochs=20 batch_size=16 loss_fn=ff3dLoss
 ```
 
 > [!NOTE]  
@@ -126,10 +126,10 @@ Since in training, we save all hyper-parameters and model checkpoints, the only 
 # downloaded pre-trained weight, or train by yourself
 wget https://zenodo.org/records/12751363/files/deflow_best.ckpt
 
-python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
+python eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
 # it will output a command with absolute path of a zip file for you to submit to leaderboard
-python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=1
-python 2_eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=2
+python eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=1
+python eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_version=2
 ```
 
 Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
@@ -159,16 +159,16 @@ We provide a script to visualize the results of the model. You can specify the c
 # downloaded pre-trained weight, or train by yourself
 wget https://zenodo.org/records/12751363/files/deflow_best.ckpt
 
-python 3_vis.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
+python save.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
 # Then terminal will tell you the command you need run. For example here is the output of the above:
 Model: DeFlow, Checkpoint from: /home/kin/deflow_best.ckpt
 We already write the estimate flow: deflow_best into the dataset, please run following commend to visualize the flow. Copy and paste it to your terminal:
-python tools/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tools/visualization.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
 Enjoy! ^v^ ------ 
 
 # Then run the command in the terminal:
-python tools/scene_flow.py --flow_mode 'deflow_best' --data_dir /home/kin/data/av2/preprocess/sensor/mini
+python tools/visualization.py --res_name 'deflow_best' --data_dir /home/kin/data/av2/preprocess_v2/sensor/mini
 ```
 
 https://github.com/KTH-RPL/DeFlow/assets/35365764/9b265d56-06a9-4300-899c-96047a0da505

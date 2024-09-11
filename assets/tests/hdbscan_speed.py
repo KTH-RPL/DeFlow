@@ -18,7 +18,7 @@ from cuml.cluster import hdbscan
 from sklearn.cluster import HDBSCAN
 import hdbscan as cpu_hdbscan
 
-from scripts.utils.o3d_view import MyVisualizer, color_map
+from src.utils.o3d_view import MyVisualizer, color_map
 import open3d as o3d
 
 MAX_AXIS_RANGE = 60

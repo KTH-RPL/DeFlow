@@ -10,28 +10,23 @@ import dztimer, torch
 import torch.nn as nn
 
 from .basic.unet import FastFlow3DUNet
-from .basic.embedder_model import DynamicEmbedder
-from .basic.fast_flow_decoder import FastFlowDecoder, FastFlowDecoderStepDown
+from .basic.encoder import DynamicEmbedder
+from .basic.decoder import LinearDecoder
 from .basic import cal_pose0to1
 
 
 class FastFlow3D(nn.Module):
     def __init__(self, voxel_size = [0.2, 0.2, 6],
                  point_cloud_range = [-51.2, -51.2, -3, 51.2, 51.2, 3],
-                 grid_feature_size = [512, 512],
-                 bottleneck_head = False):
+                 grid_feature_size = [512, 512]):
         super().__init__()
+
         self.embedder = DynamicEmbedder(voxel_size=voxel_size,
                                         pseudo_image_dims=grid_feature_size,
                                         point_cloud_range=point_cloud_range,
                                         feat_channels=32)
-
         self.backbone = FastFlow3DUNet()
-        if bottleneck_head:
-            self.head = FastFlowDecoderStepDown(
-                voxel_pillar_size=voxel_size[:2], num_stepdowns=3)
-        else:
-            self.head = FastFlowDecoder()
+        self.head = LinearDecoder()
 
         self.timer = dztimer.Timing()
         self.timer.start("Total")

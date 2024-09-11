@@ -40,7 +40,7 @@ import os, sys
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 from dataprocess.misc_data import create_reading_index
-from scripts.utils.av2_eval import read_ego_SE3_sensor
+from src.utils.av2_eval import read_ego_SE3_sensor
 
 BOUNDING_BOX_EXPANSION: Final = 0.2
 CATEGORY_TO_INDEX: Final = {
