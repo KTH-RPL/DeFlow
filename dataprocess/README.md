@@ -88,7 +88,7 @@ And flowlabel data can be downloaded here with ground segmentation by HDMap foll
 You can download the processed map folder here to free yourself downloaded another type of data again:
 
 ```bash
-wget https://zenodo.org/records/12751363/files/waymo_map.tar.gz
+wget https://zenodo.org/records/13744999/files/waymo_map.tar.gz
 tar -xvf waymo_map.tar.gz -C /home/kin/data/waymo/flowlabel
 # you will see there is a `map` folder in the `flowlabel` folder now.
 ```
