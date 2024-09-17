@@ -8,15 +8,15 @@ Here we introduce some tools to help you:
 
 ## Visualization
 
-run `tools/scene_flow.py` to view the scene flow dataset with ground truth flow. Note the color wheel in under world coordinate.
+run `tools/visualization.py` to view the scene flow dataset with ground truth flow. Note the color wheel in under world coordinate.
 
 ```bash
 # view gt flow
-python3 tools/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name flow
+python3 tools/visualization.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name flow
 
 # view est flow
-python3 tools/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name deflow_best
-python3 tools/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name seflow_best
+python3 tools/visualization.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name deflow_best
+python3 tools/visualization.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name seflow_best
 ```
 
 Demo Effect (press `SPACE` to stop and start in the visualization window):
