@@ -27,7 +27,7 @@ VIEW_FILE = f"{BASE_DIR}/assets/view/av2.json"
 def check_flow(
     data_dir: str ="/home/kin/data/av2/preprocess/sensor/mini",
     res_name: str = "flow", # "flow", "flow_est"
-    start_id: int = -1,
+    start_id: int = 0,
     point_size: float = 3.0,
 ):
     dataset = HDF5Data(data_dir, vis_name=res_name, flow_view=True)
@@ -37,10 +37,7 @@ def check_flow(
     opt.background_color = np.asarray([80/255, 90/255, 110/255])
     opt.point_size = point_size
 
-    for data_id in (pbar := tqdm(range(0, len(dataset)))):
-        # for easy stop and jump to any id, and save same id always from 0.
-        if data_id < start_id and start_id != -1:
-            continue
+    for data_id in (pbar := tqdm(range(start_id, len(dataset)))):
         data = dataset[data_id]
         now_scene_id = data['scene_id']
         pbar.set_description(f"id: {data_id}, scene_id: {now_scene_id}, timestamp: {data['timestamp']}")
@@ -77,10 +74,7 @@ def vis(
     # opt.background_color = np.asarray([1, 1, 1])
     opt.point_size = point_size
 
-    for data_id in (pbar := tqdm(range(0, len(dataset)))):
-        # for easy stop and jump to any id, and save same id always from 0.
-        if data_id < start_id and start_id != -1:
-            continue
+    for data_id in (pbar := tqdm(range(start_id, len(dataset)))):
         data = dataset[data_id]
         now_scene_id = data['scene_id']
         pbar.set_description(f"id: {data_id}, scene_id: {now_scene_id}, timestamp: {data['timestamp']}")

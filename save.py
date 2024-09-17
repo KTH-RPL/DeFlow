@@ -8,7 +8,7 @@
 # listed on the above website.
 
 # Description: produce flow based on model predict and write into the dataset, 
-#              then use tools/scene_flow.py flow_mode="flow_est" to visualize the flow.
+#              then use `tools/visualization.py` to visualize the flow.
 """
 
 import torch

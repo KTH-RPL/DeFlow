@@ -1,3 +1,6 @@
+'''
+# Usage for old model file to new version code
+'''
 import torch
 import fire, time
 
