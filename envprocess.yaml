@@ -1,0 +1,28 @@
+name: dataprocess
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.8
+  - pytorch::pytorch=2.0.0
+  - pytorch::torchvision
+  - numba
+  - numpy==1.22
+  - pandas
+  - pip
+  - scipy
+  - tqdm
+  - scikit-learn
+  - fire
+  - pip:
+    - nuscenes-devkit
+    - av2==0.2.1
+    - waymo-open-dataset-tf-2.11.0==1.5.0
+    - open3d==0.16.0
+    - linefit
+    - dztimer
+    - dufomap==1.0.0
+    - evalai
+
+# Reason about the version fixed:
+# numpy==1.22: package conflicts, need numpy higher or same 1.22

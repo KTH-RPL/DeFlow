@@ -8,8 +8,7 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 
 ![](assets/docs/seflow_arch.png)
 
-2024/07/16 17:18: Most of codes already uploaded and tested. You can to try training directly by [downloading](https://zenodo.org/records/13744999) demo data or pretrained weight for evaluation. 
-The process script will be public when the paper is published officially. 
+2024/09/26 16:24: All codes already uploaded and tested. You can to try training directly by [downloading](https://zenodo.org/records/13744999) demo data or pretrained weight for evaluation. 
 
 Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/13744999) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
@@ -88,8 +87,8 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 #### Prepare raw data 
 
-Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
-[Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
+Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified `.h5` format. 
+[Runtime: Normally need 45 mins finished run following commands totally in setup mentioned in our paper]
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
@@ -172,11 +171,14 @@ https://github.com/user-attachments/assets/f031d1a2-2d2f-4947-a01f-834ed1c146e6
 ## Cite & Acknowledgements
 
 ```
-@article{zhang2024seflow,
+@inproceedings{zhang2024seflow,
   author={Zhang, Qingwen and Yang, Yi and Li, Peizheng and Andersson, Olov and Jensfelt, Patric},
-  title={SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving},
-  journal={arXiv preprint arXiv:2407.01702},
-  year={2024}
+  title={{SeFlow}: A Self-Supervised Scene Flow Method in Autonomous Driving},
+  booktitle={European Conference on Computer Vision (ECCV)},
+  year={2024},
+  pages={353–369},
+  organization={Springer},
+  doi={10.1007/978-3-031-73232-4_20},
 }
 @inproceedings{zhang2024deflow,
   author={Zhang, Qingwen and Yang, Yi and Fang, Heng and Geng, Ruoyu and Jensfelt, Patric},
