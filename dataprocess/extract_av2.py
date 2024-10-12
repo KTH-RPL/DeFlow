@@ -208,6 +208,8 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
                         for file in os.listdir(data_dir / log_id / "sensors/lidar")
                         if file.endswith('.feather')])
 
+    gt_flow_flag = False if not (data_dir / log_id / "annotations.feather").exists() else True
+
     # if n is not None:
     #     iter_bar = tqdm(zip(timestamps, timestamps[1:]), leave=False,
     #                      total=len(timestamps) - 1, position=n,
@@ -222,7 +224,7 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
             if pc0.shape[0] < 256:
                 print(f'{log_id}/{ts0} has less than 256 points, skip this scenarios. Please check the data if needed.')
                 break
-            if cnt == len(timestamps) - 1:
+            if cnt == len(timestamps) - 1 or not gt_flow_flag:
                 create_group_data(group, pc0, is_ground_0.astype(np.bool_), pose0.transform_matrix.astype(np.float32))
             else:
                 ts1 = timestamps[cnt + 1]
@@ -269,7 +271,7 @@ def main(
     argo_dir: str = "/home/kin/data/av2",
     output_dir: str ="/home/kin/data/av2/preprocess",
     av2_type: str = "sensor",
-    data_mode: str = "test",
+    data_mode: str = "val",
     mask_dir: str = "/home/kin/data/av2/3d_scene_flow",
     nproc: int = (multiprocessing.cpu_count() - 1),
     only_index: bool = False,

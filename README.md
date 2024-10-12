@@ -90,8 +90,8 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 #### Prepare raw data 
 
-Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified h5 format. 
-[Runtime: Normally need 10 mins finished run following commands totally in my desktop, 45 mins for the cluster I used]
+Checking more information (step for downloading raw data, storage size, #frame etc) in [dataprocess/README.md](dataprocess/README.md). Extract all data to unified `.h5` format. 
+[Runtime: Normally need 45 mins finished run following commands totally in setup mentioned in our paper]
 ```bash
 python dataprocess/extract_av2.py --av2_type sensor --data_mode train --argo_dir /home/kin/data/av2 --output_dir /home/kin/data/av2/preprocess_v2
 python dataprocess/extract_av2.py --av2_type sensor --data_mode val --mask_dir /home/kin/data/av2/3d_scene_flow
@@ -185,11 +185,14 @@ https://github.com/KTH-RPL/DeFlow/assets/35365764/9b265d56-06a9-4300-899c-96047a
   pages={2105-2111},
   doi={10.1109/ICRA57147.2024.10610278}
 }
-@article{zhang2024seflow,
+@inproceedings{zhang2024seflow,
   author={Zhang, Qingwen and Yang, Yi and Li, Peizheng and Andersson, Olov and Jensfelt, Patric},
   title={{SeFlow}: A Self-Supervised Scene Flow Method in Autonomous Driving},
-  journal={arXiv preprint arXiv:2407.01702},
-  year={2024}
+  booktitle={European Conference on Computer Vision (ECCV)},
+  year={2024},
+  pages={353–369},
+  organization={Springer},
+  doi={10.1007/978-3-031-73232-4_20},
 }
 ```
 
