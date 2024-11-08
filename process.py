@@ -57,7 +57,10 @@ def run_cluster(
             if "dufo_label" not in data:
                 print(f"Warning: {scene_id} {data['timestamp']} has no dufo_label, will be skipped. Better to rerun dufomap again in this scene.")
                 continue
-
+            elif data["dufo_label"].sum() == 0:
+                print(f"Warning: {scene_id} {data['timestamp']} has no dynamic points, will be skipped. Better to check this scene.")
+                continue
+            
             cluster_label = np.zeros(pc0.shape[0], dtype= np.int16)
             hdb.fit(pc0[data["dufo_label"]==1])
             # NOTE(Qingwen): since -1 will be assigned if no cluster. We set it to 0.
