@@ -57,7 +57,7 @@ def run_cluster(
             if "dufo_label" not in data:
                 print(f"Warning: {scene_id} {data['timestamp']} has no dufo_label, will be skipped. Better to rerun dufomap again in this scene.")
                 continue
-            elif data["dufo_label"].sum() == 0:
+            elif data["dufo_label"].sum() < 20:
                 print(f"Warning: {scene_id} {data['timestamp']} has no dynamic points, will be skipped. Better to check this scene.")
                 continue
             
