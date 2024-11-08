@@ -3,9 +3,8 @@
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
-# If you find this repo helpful, please cite the respective publication as 
-# listed on the above website.
+# This work is licensed under the terms of the MIT license.
+# For a copy, see <https://opensource.org/licenses/MIT>.
 
 # Description: Preprocess Data, save as h5df format for faster loading
 # Reference: 
@@ -40,7 +39,6 @@ import os, sys
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
 from dataprocess.misc_data import create_reading_index
-from src.utils.av2_eval import read_ego_SE3_sensor
 
 BOUNDING_BOX_EXPANSION: Final = 0.2
 CATEGORY_TO_INDEX: Final = {
@@ -68,8 +66,6 @@ def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
         timestamps = sorted([int(file.replace('.feather', ''))
                         for file in os.listdir(Path(mask_dir) / f"{data_mode}-masks" / scene_id)
                         if file.endswith('.feather')])
-        if not os.path.exists(output_dir_ / f'{scene_id}.h5'):
-            continue
         with h5py.File(output_dir_ / f'{scene_id}.h5', 'r+') as f:
             for ts in timestamps:
                 key = str(ts)
@@ -87,16 +83,11 @@ def create_eval_mask(data_mode: str, output_dir_: Path, mask_dir: str):
 
 def read_pose_pc_ground(data_dir: Path, log_id: str, timestamp: int, avm: ArgoverseStaticMap):
     log_poses_df = read_feather(data_dir / log_id / "city_SE3_egovehicle.feather")
-    # more detail: https://argoverse.github.io/user-guide/datasets/lidar.html#sensor-suite
-    ego2sensor_pose = read_ego_SE3_sensor((data_dir / log_id))['up_lidar']
     filtered_log_poses_df = log_poses_df[log_poses_df["timestamp_ns"].isin([timestamp])]
     pose = convert_pose_dataframe_to_SE3(filtered_log_poses_df.loc[filtered_log_poses_df["timestamp_ns"] == timestamp])
     pc = Sweep.from_feather(data_dir / log_id / "sensors" / "lidar" / f"{timestamp}.feather").xyz
     # transform to city coordinate since sweeps[0].xyz is in ego coordinate to get ground mask
     is_ground = avm.get_ground_points_boolean(pose.transform_point_cloud(pc))
-
-    # NOTE(SeFlow): transform to sensor coordinate, since some ray-casting based methods need sensor coordinate
-    pc = ego2sensor_pose.inverse().transform_point_cloud(pc) 
     return pc, pose, is_ground
 
 def compute_sceneflow(data_dir: Path, log_id: str, timestamps: Tuple[int, int]) -> Dict[str, Union[np.ndarray, SE3]]:
@@ -208,8 +199,6 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
                         for file in os.listdir(data_dir / log_id / "sensors/lidar")
                         if file.endswith('.feather')])
 
-    gt_flow_flag = False if not (data_dir / log_id / "annotations.feather").exists() else True
-
     # if n is not None:
     #     iter_bar = tqdm(zip(timestamps, timestamps[1:]), leave=False,
     #                      total=len(timestamps) - 1, position=n,
@@ -221,10 +210,7 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
         for cnt, ts0 in enumerate(timestamps):
             group = f.create_group(str(ts0))
             pc0, pose0, is_ground_0 = read_pose_pc_ground(data_dir, log_id, ts0, avm)
-            if pc0.shape[0] < 256:
-                print(f'{log_id}/{ts0} has less than 256 points, skip this scenarios. Please check the data if needed.')
-                break
-            if cnt == len(timestamps) - 1 or not gt_flow_flag:
+            if cnt == len(timestamps) - 1:
                 create_group_data(group, pc0, is_ground_0.astype(np.bool_), pose0.transform_matrix.astype(np.float32))
             else:
                 ts1 = timestamps[cnt + 1]
@@ -271,16 +257,12 @@ def main(
     argo_dir: str = "/home/kin/data/av2",
     output_dir: str ="/home/kin/data/av2/preprocess",
     av2_type: str = "sensor",
-    data_mode: str = "val",
+    data_mode: str = "test",
     mask_dir: str = "/home/kin/data/av2/3d_scene_flow",
-    nproc: int = (multiprocessing.cpu_count() - 1),
-    only_index: bool = False,
+    nproc: int = (multiprocessing.cpu_count() - 1)
 ):
     data_root_ = Path(argo_dir) / av2_type/ data_mode
     output_dir_ = Path(output_dir) / av2_type / data_mode
-    if only_index:
-        create_reading_index(output_dir_)
-        return
     output_dir_.mkdir(exist_ok=True, parents=True)
     process_logs(data_root_, output_dir_, nproc)
     create_reading_index(output_dir_)

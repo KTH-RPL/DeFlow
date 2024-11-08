@@ -6,10 +6,8 @@ defaults:
 slurm_id: 00000
 
 wandb_mode: offline # [offline, disabled, online]
-wandb_project_name: deflow
-
-train_data: /home/kin/data/av2/preprocess_v2/demo/sensor/train
-val_data: /home/kin/data/av2/preprocess_v2/demo/sensor/val
+wandb_project_name: Flow4D
+dataset_path: /data/jiehao/dataset/deflow/av2/preprocess/sensor
 
 output: ${model.name}-${slurm_id}
 
@@ -26,17 +24,15 @@ epochs: 3
 gradient_clip_val: 5.0
 
 # optimizer ==> Adam
-lr: 2e-4
-loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss, seflowLoss]
-add_seloss: # {chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}
+lr: 2e-6
+loss_fn: deflowLoss # choices: [ff3dLoss, zeroflowLoss, deflowLoss]
 
 # log settings
 seed: 42069
 log_every: 10 # steps epochs*dataset_size/batch_size
-val_every: 3 # epochs
-save_top_model: 5 # top_k model will be saved.
+val_every: 1 # epochs
+save_top_model: 4 # top_k model will be saved.
 
 # -----> Model and Task Parameters
 voxel_size: [0.2, 0.2, 6]
 point_cloud_range: [-51.2, -51.2, -3, 51.2, 51.2, 3]
-num_frames: 2

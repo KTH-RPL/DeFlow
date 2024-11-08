@@ -2,11 +2,7 @@
 # Created: 2024-02-26 12:42
 # Copyright (C) 2024-now, RPL, KTH Royal Institute of Technology
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/), Tianshuai Hu (thuaj@connect.ust.hk)
-# 
-# This file is part of SeFlow (https://github.com/KTH-RPL/SeFlow).
-# If you find this repo helpful, please cite the respective publication as 
-# listed on the above website.
-# 
+
 # Description: Preprocess Data, save as h5df format for faster loading
 # This one is for Waymo dataset, refer a lot to 
 # Kyle's ZeroFlow code: https://github.com/kylevedder/zeroflow/tree/master/data_prep_scripts/waymo
@@ -361,9 +357,6 @@ def process_log(data_dir: Path, log, log_map_folder, output_dir: Path, n = None)
         pose_flow = car_frame_pc[:, :3] @ ego_motion[:3, :3].T + ego_motion[:3, 3] - car_frame_pc[:, :3]
         ground_mask = is_ground_points(raster_heightmap, transform_se2, transform_scale, global_frame_pc)
         timestamp = frame.timestamp_micros
-        if car_frame_pc.shape[0] < 256:
-            print(f'{scene_id}/{timestamp} has less than 256 points, skip this scenarios. Please check the data if needed.')
-            break
         with h5py.File(output_dir/f'{scene_id}.h5', 'a') as f:
             group = f.create_group(str(timestamp))
             create_group_data(group, car_frame_pc, pose, ego_motion=ego_motion, gm=np.array(ground_mask), flow_0to1=(flow/10.0+pose_flow), flow_category=label)
@@ -406,10 +399,10 @@ def process_logs(data_dir: Path, map_dir: Path, output_dir: Path, nproc: int):
             res = list(tqdm(p.imap_unordered(proc, args), total=len(args), ncols=100))
 
 def main(
-    flow_data_dir: str = "/home/kin/data/waymo/flowlabel",
-    mode: str = "test",
-    map_dir: str = "/home/kin/data/waymo/flowlabel/maps",
-    output_dir: str ="/home/kin/data/waymo/flowlabel/preprocess",
+    flow_data_dir: str = "/data/jiehao/dataset/deflow/waymo",
+    mode: str = "val",
+    map_dir: str = "/data/jiehao/dataset/deflow/waymo/flowlabel/maps",
+    output_dir: str ="/data/jiehao/dataset/deflow/waymo/flowlabel/preprocess",
     nproc: int = (multiprocessing.cpu_count() - 1),
     create_index_only: bool = False,
 ):

@@ -1,0 +1,9 @@
+name: flow4D
+
+target:
+  _target_: scripts.network.models.flow4D.Flow4D
+  voxel_size: ${voxel_size}
+  point_cloud_range: ${point_cloud_range}
+  num_frames: ${num_frames}
+
+val_monitor: val/Dynamic/Mean

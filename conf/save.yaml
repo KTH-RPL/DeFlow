@@ -1,12 +1,21 @@
-dataset_path: /home/kin/data/av2/preprocess_v2/sensor/vis
-checkpoint: /home/kin/model_zoo/deflow_best.ckpt
-res_name: # if None will directly be the `model_name.ckpt` in checkpoint path
+dataset_path: /data/jiehao/dataset/deflow/demo_data/av2/preprocess_v2/sensor/train
+#dataset_path: /data/jiehao/dataset/deflow/av2/preprocess/sensor/test
 
+#flow4d
+checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1020_032637/checkpoints/16__0.157_0.008_0.018_0.041_0.002_0.010_0.85.ckpt
+
+
+
+
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1014_034938/checkpoints/14__0.162_0.008_0.018_0.042_0.002_0.010_0.86.ckpt
+res_name: flow4d_best
+
+loss_fn: mambaflowLoss_v3
 
 # no need to change
 defaults:
   - hydra: default
-  - model: deflow
+  - model: flow4D
 seed: 42069
 gpus: 1
 slurm_id: 00000

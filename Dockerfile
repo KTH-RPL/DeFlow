@@ -32,10 +32,11 @@ RUN /opt/conda/bin/conda init zsh && /opt/mambaforge/bin/mamba init zsh
 ENV PATH /opt/conda/bin:$PATH
 ENV PATH /opt/mambaforge/bin:$PATH
 
-RUN mkdir -p /home/kin/workspace && cd /home/kin/workspace && git clone https://github.com/KTH-RPL/SeFlow.git
-WORKDIR /home/kin/workspace/SeFlow
+RUN mkdir -p /home/kin/workspace && cd /home/kin/workspace && git clone --recursive https://github.com/KTH-RPL/DeFlow.git
+WORKDIR /home/kin/workspace/DeFlow
 RUN apt-get update && apt-get install libgl1 -y
 # need read the gpu device info to compile the cuda extension
-RUN cd /home/kin/workspace/SeFlow && /opt/mambaforge/bin/mamba env create -f environment.yaml
-RUN cd /home/kin/workspace/SeFlow/assets/cuda/mmcv && /opt/mambaforge/envs/seflow/bin/python ./setup.py install
-RUN cd /home/kin/workspace/SeFlow/assets/cuda/chamfer3D && /opt/mambaforge/envs/seflow/bin/python ./setup.py install
+RUN cd /home/kin/workspace/DeFlow && /opt/mambaforge/bin/mamba env create -f environment.yaml
+RUN cd /home/kin/workspace/DeFlow/mmcv && export MMCV_WITH_OPS=1 && export FORCE_CUDA=1 && /opt/mambaforge/envs/deflow/bin/pip install -e .
+
+

@@ -4,10 +4,10 @@
 # Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
 # This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
-# If you find this repo helpful, please cite the respective publication as 
+# If you find this repo helpful, please cite the respective publication as
 # listed on the above website.
 
-# Description: produce flow based on model predict and write into the dataset, 
+# Description: produce flow based on model predict and write into the dataset,
 #              then use `tools/visualization.py` to visualize the flow.
 """
 
@@ -18,14 +18,16 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
-from src.dataset import HDF5Dataset
-from src.trainer import ModelWrapper
-from src.utils import bc
+from scripts.network.dataloader_flow4D import HDF5Dataset
+from scripts.pl_model_flow4D import ModelWrapper
+from scripts.utils import bc
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="save")
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
+    print(output_dir)
 
     if not os.path.exists(cfg.checkpoint):
         print(f"Checkpoint {cfg.checkpoint} does not exist. Need checkpoints for evaluation.")
@@ -42,17 +44,19 @@ def main(cfg):
 
     wandb_logger = WandbLogger(save_dir=output_dir,
                                entity="kth-rpl",
-                               project=f"deflow-eval", 
+                               project=f"deflow-eval",
                                name=f"{cfg.output}",
                                offline=True)
-    
+
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)
-    trainer.test(model = mymodel, \
-                 dataloaders = DataLoader(\
-                     HDF5Dataset(cfg.dataset_path, n_frames=checkpoint_params.cfg.num_frames if 'num_frames' in checkpoint_params.cfg else 2), \
-                    batch_size=1, shuffle=False))
+    trainer.test(model=mymodel, \
+                 dataloaders=DataLoader( \
+                     HDF5Dataset(cfg.dataset_path,
+                                 n_frames=checkpoint_params.cfg.num_frames if 'num_frames' in checkpoint_params.cfg else 2), \
+                     batch_size=1, shuffle=False))
     wandb.finish()
+
 
 if __name__ == "__main__":
     main()

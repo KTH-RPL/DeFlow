@@ -1,2 +1,2 @@
 run:
-  dir: logs/jobs/${output}/${now:%m-%d-%H-%M}
+  dir: logs/wandb/${output}

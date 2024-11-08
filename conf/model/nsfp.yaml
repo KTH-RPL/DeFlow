@@ -1,0 +1,14 @@
+name: nsfp
+
+target:
+  _target_: scripts.network.models.nsfp.NSFP
+  filter_size: 128
+  act_fn: relu
+  layer_size: 8
+  itr_num: 2
+  lr: 8e-3
+  min_delta: 5e-5
+  point_cloud_range: ${point_cloud_range}
+  
+val_monitor: val/Three-way
+is_trainable: False

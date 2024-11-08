@@ -12,13 +12,6 @@ We've updated the process dataset for:
 - [x] Waymo: check [here](#waymo-dataset). The process script was involved from [SeFlow](https://github.com/KTH-RPL/SeFlow).
 - [ ] nuScenes: done coding, public after review. Will be involved later by another paper.
 
-If you want to use all datasets above, there is a specific process environment in [envprocess.yml](../envprocess.yml) to install all the necessary packages. As Waymo package have different configuration and conflict with the main environment. Setup through the following command:
-
-```bash
-conda env create -f envprocess.yml
-conda activate dataprocess
-```
-
 ## Download
 
 ### Argoverse 2.0
@@ -41,7 +34,7 @@ s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" sensor/te
 s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
 ```
 
-Then to quickly pre-process the data, we can [read these commands](#process) on how to generate the pre-processed data for training and evaluation. This will take around 0.5-2 hour for the whole dataset (train & val) based on how powerful your CPU is.
+Then to quickly pre-process the data, we can [read more detail](../preprocess/README.md) on how to generate the pre-processed data for training and evaluation. This will take around 2 hour for the whole dataset (train & val) based on how powerful your CPU is.
 
 More [self-supervised data in AV2 LiDAR only](https://www.argoverse.org/av2.html#lidar-link), note: It **does not** include **imagery or 3D annotations**. The dataset is designed to support research into self-supervised learning in the lidar domain, as well as point cloud forecasting.
 ```bash
@@ -95,7 +88,7 @@ And flowlabel data can be downloaded here with ground segmentation by HDMap foll
 You can download the processed map folder here to free yourself downloaded another type of data again:
 
 ```bash
-wget https://zenodo.org/records/13744999/files/waymo_map.tar.gz
+wget https://zenodo.org/records/12632962/files/waymo_map.tar.gz
 tar -xvf waymo_map.tar.gz -C /home/kin/data/waymo/flowlabel
 # you will see there is a `map` folder in the `flowlabel` folder now.
 ```
@@ -128,6 +121,12 @@ All these preprocess scripts will generate the same format `.h5` file. The file 
 File: `[*:logid].h5` file named in logid. Every timestamp is the key of group (f[key]).
 
 ```python
+def process_log(data_dir: Path, mode: str, scene_num_id: int, output_dir: Path, n: Optional[int] = None) :
+    def create_group_data(group, pc, pose, gm = None, flow_0to1=None, flow_valid=None, flow_category=None, ego_motion=None):
+        group.create_dataset('lidar', data=pc.astype(np.float32))
+        group.create_dataset('pose', data=pose.astype(np.float64))
+
+
 def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] = None) :
     def create_group_data(group, pc, gm, pose, flow_0to1=None, flow_valid=None, flow_category=None, ego_motion=None):
         group.create_dataset('lidar', data=pc.astype(np.float32))
@@ -139,6 +138,7 @@ def process_log(data_dir: Path, log_id: str, output_dir: Path, n: Optional[int] 
             group.create_dataset('flow_is_valid', data=flow_valid.astype(bool))
             group.create_dataset('flow_category_indices', data=flow_category.astype(np.uint8))
             group.create_dataset('ego_motion', data=ego_motion.astype(np.float32))
+
 ```
 
 After preprocessing, all data can use the same dataloader to load the data. As already in our DeFlow code.
@@ -147,7 +147,7 @@ Or you can run testing file to visualize the data.
 
 ```bash
 # view gt flow
-python tools/visualization.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --res_name flow
+python3 tests/scene_flow.py --data_dir /home/kin/data/av2/preprocess/sensor/mini --flow_mode flow
 
-python tools/visualization.py --data_dir /home/kin/data/waymo/preprocess/val --res_name flow
+python3 tests/scene_flow.py --data_dir /home/kin/data/waymo/preprocess/val --flow_mode flow
 ```

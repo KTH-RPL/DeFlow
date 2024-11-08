@@ -1,0 +1,75 @@
+defaults:
+  - hydra: default
+  - model: flow4D
+
+slurm_id: 00000
+
+wandb_mode: offline # [offline, disabled, online]
+dataset_path: /data/jiehao/dataset/deflow/av2/preprocess/sensor
+#dataset_path: /data/jiehao/dataset/deflow/demo_data/av2/preprocess_v2/sensor
+
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1016_220728/checkpoints/00__0.191_0.008_0.022_0.053_0.002_0.010_0.84.ckpt
+
+output: ${model.name}-${slurm_id}
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1016_221250/checkpoints/00__0.205_0.008_0.022_0.055_0.002_0.010_0.84.ckpt
+
+
+## MambaFlow num_frame=2
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1004_215231/checkpoints/15__0.213_0.012_0.025_0.057_0.006_0.014_0.81.ckpt
+
+# flow4d num_frame=2
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1005_133531/checkpoints/23__0.209_0.012_0.025_0.055_0.003_0.015_0.73.ckpt
+
+# flow4d num_frame=5
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/0910_223743/checkpoints/07__0.177_0.009_0.021_0.047_0.003_0.012_0.81.ckpt
+
+#2mamba
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1013_142123/checkpoints/14__0.164_0.008_0.018_0.042_0.002_0.010_0.86.ckpt
+
+#1mamba SOTA weight(14)
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1014_034938/checkpoints/14__0.162_0.008_0.018_0.042_0.002_0.010_0.86.ckpt
+
+#1mamba SOTA weight(12)
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1014_034938/checkpoints/12__0.161_0.008_0.018_0.042_0.002_0.010_0.86.ckpt
+
+#1mamba SOTA weight(19)
+checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1016_031904/checkpoints/19__0.162_0.008_0.018_0.041_0.002_0.010_0.86.ckpt
+
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1012_224018/checkpoints/17__0.165_0.008_0.019_0.044_0.002_0.010_0.85.ckpt
+av2_mode: test # [val, test]
+save_res: False # [True, False]
+
+submit_version: '2024' # submit version
+num_frames: 5
+
+loss_fn: mambaflowLoss_v3
+# no need to change
+gpus: 1
+seed: 42069
+
+#wandb_mode: offline # [offline, disabled, online]
+#
+#dataset_path: /data/jiehao/dataset/deflow/av2/preprocess/sensor
+#checkpoint: /data/jiehao/project/Flow4D/logs/wandb/1005_133531/checkpoints/23__0.209_0.012_0.025_0.055_0.003_0.015_0.73.ckpt
+#
+#av2_mode: test # [val, test]
+#save_res: False # [True, False]
+#
+#submit_version: '2024' # submit version
+#num_frames: 2
+#loss_fn: mambaflowLoss_v3
+#
+#leaderboard_version: 2 # [1, 2]
+#supervised_flag: True # [True, False], whether you use any label from the dataset
+#
+## no need to change
+#eval_only: True
+#defaults:
+#  - hydra: default
+#  - model: flow4D
+#
+#slurm_id: 00000
+#output: ${model.name}-${slurm_id}
+#gpus: 1
+#seed: 42069
+

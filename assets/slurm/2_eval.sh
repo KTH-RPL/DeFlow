@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -J eval
 #SBATCH --gpus 1
-#SBATCH -t 01:00:00
+#SBATCH -t 3-00:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=qingwen@kth.se
 #SBATCH --output /proj/berzelius-2023-154/users/x_qinzh/deflow/logs/slurm/%J_eval.out
@@ -30,14 +30,14 @@ echo "Start training..."
 #     av2_mode=test save_res=True
 
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10086990/checkpoints/epoch_49_fastflow3d.ckpt
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10088873/checkpoints/epoch_49_fastflow3d.ckpt
 
-/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python eval.py \
+/proj/berzelius-2023-154/users/x_qinzh/mambaforge/envs/deflow/bin/python 2_eval.py \
     wandb_mode=online dataset_path=/scratch/local/av2/sensor av2_mode=val \
     checkpoint=/proj/berzelius-2023-154/users/x_qinzh/deflow/logs/wandb/fastflow3d-10088874/checkpoints/epoch_49_fastflow3d.ckpt

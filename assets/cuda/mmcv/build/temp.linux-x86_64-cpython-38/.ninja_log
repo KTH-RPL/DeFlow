@@ -1,0 +1,7 @@
+# ninja log v5
+0	10437	1725970859028643798	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/cudabind.o	2c84376d8c8d9756
+1	10935	1725970859528643785	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/scatter_points.o	9f03f9bb6e1c73d2
+2	11539	1725970860128643769	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/voxelization.o	f26466090196f420
+2	25053	1725970873612643410	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/voxelization_cuda.o	1bf2b3655b66d725
+1	27725	1725970876292643339	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/scatter_points_cuda.o	327d0fbfffc7ae68
+1	28614	1725970877192643315	/data/jiehao/project/Flow4D/assets/cuda/mmcv/build/temp.linux-x86_64-cpython-38/pybind.o	c799f2118c14823

@@ -1,5 +1,5 @@
 
-dataset_path: /home/kin/data/av2/preprocess_v2/sensor
+dataset_path: /home/kin/data/av2/preprocess/sensor
 checkpoint: /home/kin/model_zoo/deflow.ckpt
 av2_mode: val # [val, test]
 save_res: False # [True, False]
@@ -14,6 +14,7 @@ gpus: 1
 seed: 42069
 eval_only: True
 wandb_mode: offline # [offline, disabled, online]
+
 defaults:
   - hydra: default
   - model: deflow

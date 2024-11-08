@@ -21,8 +21,3 @@ cancel.sh
 # figure
 *.png
 *.pdf
-
-# cuda build files
-*.egg-info
-build*
-dist*
