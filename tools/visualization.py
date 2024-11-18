@@ -62,7 +62,7 @@ def check_flow(
 def vis(
     data_dir: str ="/home/kin/data/av2/preprocess/sensor/mini",
     res_name: str = "flow", # "flow", "flow_est"
-    start_id: int = -1,
+    start_id: int = 0,
     point_size: float = 2.0,
 ):
     dataset = HDF5Data(data_dir, vis_name=res_name, flow_view=True)
@@ -88,7 +88,10 @@ def vis(
         pose_flow = pc0[:, :3] @ ego_pose[:3, :3].T + ego_pose[:3, 3] - pc0[:, :3]
         
         pcd = o3d.geometry.PointCloud()
-        if res_name in ['dufo_label', 'label']:
+        if res_name == 'raw': # no result, only show **raw point cloud**
+            pcd.points = o3d.utility.Vector3dVector(pc0[:, :3])
+            pcd.paint_uniform_color([1.0, 1.0, 1.0])
+        elif res_name in ['dufo_label', 'label']:
             labels = data[res_name]
             pcd_i = o3d.geometry.PointCloud()
             for label_i in np.unique(labels):
