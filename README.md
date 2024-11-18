@@ -8,9 +8,11 @@ SeFlow: A Self-Supervised Scene Flow Method in Autonomous Driving
 
 ![](assets/docs/seflow_arch.png)
 
-2024/09/26 16:24: All codes already uploaded and tested. You can to try training directly by [downloading](https://zenodo.org/records/13744999) demo data or pretrained weight for evaluation. 
+2024/11/18 16:17: Update model and demo data download link through HuggingFace, Personally I found `wget` from HuggingFace link is much faster than Zenodo.
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/13744999) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
+2024/09/26 16:24: All codes already uploaded and tested. You can to try training directly by downloading (through [HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow)/[Zenodo](https://zenodo.org/records/13744999)) demo data or pretrained weight for evaluation. 
+
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/13744999)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow) link. Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization).
 
 Task: __Self-Supervised__ Scene Flow Estimation in Autonomous Driving. No human-label needed. Real-time inference (15-20Hz in RTX3090).
 
@@ -78,10 +80,10 @@ Note: Prepare raw data and process train data only needed run once for the task.
 ### Data Preparation
 
 Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
-You can download it from [Zenodo](https://zenodo.org/records/13744999/files/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
+You can download it from [Zenodo](https://zenodo.org/records/13744999/files/demo_data.zip)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
 
 ```bash
-wget https://zenodo.org/record/12751363/files/demo_data.zip
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/demo_data.zip
 unzip demo_data.zip -p /home/kin/data/av2
 ```
 
@@ -111,7 +113,7 @@ Train SeFlow needed to specify the loss function, we set the config of our best 
 python train.py model=deflow lr=2e-4 epochs=9 batch_size=16 loss_fn=seflowLoss "add_seloss={chamfer_dis: 1.0, static_flow_loss: 1.0, dynamic_chamfer_dis: 1.0, cluster_based_pc0pc1: 1.0}" "model.target.num_iters=2" "model.val_monitor=val/Dynamic/Mean"
 ```
 
-Or you can directly download the pre-trained weight from [Zenodo](https://zenodo.org/records/13744999/files/seflow_best.ckpt) and skip the training step. 
+Or you can directly download the pre-trained weight from [Zenodo](https://zenodo.org/records/13744999/files/seflow_best.ckpt)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/seflow_best.zip) and skip the training step. 
 
 ### Other Benchmark Models
 
@@ -134,7 +136,7 @@ Since in training, we save all hyper-parameters and model checkpoints, the only 
 
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/13744999/files/seflow_best.ckpt
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/seflow_best.ckpt
 
 # it will directly prints all metric
 python eval.py checkpoint=/home/kin/seflow_best.ckpt av2_mode=val
