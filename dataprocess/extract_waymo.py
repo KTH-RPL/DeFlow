@@ -346,7 +346,6 @@ def process_log(data_dir: Path, log, log_map_folder, output_dir: Path, n = None)
     first_frame = dataset_pb2.Frame.FromString(bytearray(all_data[0]))
     scene_id = first_frame.context.name
     total_lens = len(all_data)
-    # for data_idx in tqdm(range(1, total_lens), ncols=100):
     for data_idx in range(1, total_lens):
         if data_idx >= total_lens - 2:
             # 0: no correct flow label, end(total_lens - 1) - 1: no correct pose flow
@@ -384,7 +383,6 @@ def process_logs(data_dir: Path, map_dir: Path, output_dir: Path, nproc: int):
          data_dir: Argoverse 2.0 directory
          output_dir: Output directory.
     """
-    
     if not (data_dir).exists():
         print(f'{data_dir} not found')
         return
@@ -408,7 +406,7 @@ def process_logs(data_dir: Path, map_dir: Path, output_dir: Path, nproc: int):
 def main(
     flow_data_dir: str = "/home/kin/data/waymo/flowlabel",
     mode: str = "test",
-    map_dir: str = "/home/kin/data/waymo/flowlabel/maps",
+    map_dir: str = "/home/kin/data/waymo/flowlabel/map",
     output_dir: str ="/home/kin/data/waymo/flowlabel/preprocess",
     nproc: int = (multiprocessing.cpu_count() - 1),
     create_index_only: bool = False,

@@ -12,30 +12,30 @@ We've updated the process dataset for:
 - [x] Waymo: check [here](#waymo-dataset). The process script was involved from [SeFlow](https://github.com/KTH-RPL/SeFlow).
 - [ ] nuScenes: done coding, public after review. Will be involved later by another paper.
 
-If you want to use all datasets above, there is a specific process environment in [envprocess.yml](../envprocess.yml) to install all the necessary packages. As Waymo package have different configuration and conflict with the main environment. Setup through the following command:
+If you want to use all datasets above, there is a specific process environment in [envprocess.yaml](../envprocess.yaml) to install all the necessary packages. As Waymo package have different configuration and conflict with the main environment. Setup through the following command:
 
 ```bash
-conda env create -f envprocess.yml
+conda env create -f envprocess.yaml
 conda activate dataprocess
+# NOTE we need **manually reinstall numpy** (higher than 1.22)
+# * since waymo package force numpy==1.21.5, BUT!
+# * hdbscan w. numpy<1.22.0 will raise error: 'numpy.float64' object cannot be interpreted as an integer
+# * av2 need numpy >=1.22.0, waymo with numpy==1.22.0 will be fine on code running.
+pip install numpy==1.22
 ```
 
 ## Download
 
 ### Argoverse 2.0
 
-Install their download tool:
-```bash
-mamba install s5cmd -c conda-forge
-```
-
-Download the dataset:
+Install their download tool `s5cmd`, already in our envprocess.yaml. Then download the dataset:
 ```bash
 # train is really big (750): totally 966 GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/train/*" sensor/train
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/sensor/train/*" av2/sensor/train 
 
 # val (150) and test (150): totally 168GB + 168GB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/val/*" sensor/val
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" sensor/test
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/sensor/val/*" av2/sensor/val
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/sensor/test/*" av2/sensor/test
 
 # for local and online eval mask from official repo
 s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
@@ -43,16 +43,16 @@ s5cmd --no-sign-request cp "s3://argoverse/tasks/3d_scene_flow/zips/*" .
 
 Then to quickly pre-process the data, we can [read these commands](#process) on how to generate the pre-processed data for training and evaluation. This will take around 0.5-2 hour for the whole dataset (train & val) based on how powerful your CPU is.
 
-More [self-supervised data in AV2 LiDAR only](https://www.argoverse.org/av2.html#lidar-link), note: It **does not** include **imagery or 3D annotations**. The dataset is designed to support research into self-supervised learning in the lidar domain, as well as point cloud forecasting.
+Optional: More [self-supervised data in AV2 LiDAR only](https://www.argoverse.org/av2.html#lidar-link), note: It **does not** include **imagery or 3D annotations**. The dataset is designed to support research into self-supervised learning in the lidar domain, as well as point cloud forecasting. 
 ```bash
 # train is really big (16000): totally 4 TB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/lidar/train/*" lidar/train
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/lidar/train/*" av2/lidar/train
 
 # val (2000): totally 0.5 TB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/lidar/val/*" lidar/val
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/lidar/val/*" av2/lidar/val
 
 # test (2000): totally 0.5 TB
-s5cmd --no-sign-request cp "s3://argoverse/datasets/av2/lidar/test/*" lidar/test
+s5cmd --numworkers 12 --no-sign-request cp "s3://argoverse/datasets/av2/lidar/test/*" av2/lidar/test
 ``` 
 
 #### Dataset frames
