@@ -32,5 +32,5 @@ python tools/zero2ours.py --model_path /home/kin/nsfp_distilatation_3x_49_epochs
 ```
 
 - model_path, you can download from: [kylevedder/zeroflow_weights](https://github.com/kylevedder/zeroflow_weights/tree/master/argo)
-- reference_path,  you can download fastflow3d model from: [zendo](https://zenodo.org/records/12632962)
+- reference_path,  you can download fastflow3d model from: [HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/fastflow3d_best.ckpt)
 - output_path, the converted model path. You can then run any evaluation script and visualization script with the converted model.

@@ -6,7 +6,7 @@ import fire, time
 def main(
     # download from: https://github.com/kylevedder/zeroflow_weights/tree/master/argo
     model_path: str = "/home/kin/nsfp_distilatation_3x_49_epochs.ckpt", 
-    # download from: https://zenodo.org/records/12632962
+    # download from: https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/fastflow3d_best.ckpt
     reference_path: str = "/home/kin/fastflow3d.ckpt", 
     # new output weight file
     output_path: str = "/home/kin/zeroflow3x.ckpt",

@@ -9,11 +9,13 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 
 Task: Scene Flow Estimation in Autonomous Driving. 
 
+🤗 2024/11/18 16:17: Update model and demo data download link through HuggingFace, Personally I found `wget` from HuggingFace link is much faster than Zenodo.
+
 📜 2024/07/24: Merging SeFlow & DeFlow code together, lighter setup and easier running.
 
 🔥 2024/07/02: Check the self-supervised version in our new ECCV'24 [SeFlow](https://github.com/KTH-RPL/SeFlow). The 1st ranking in new leaderboard among self-supervise methods.
 
-Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/13744999). 
+Pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/13744999)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow).
 Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualization). 
 
 **Scripts** quick view in our scripts:
@@ -81,10 +83,10 @@ Note: Prepare raw data and process train data only needed run once for the task.
 ### Data Preparation
 
 Check [dataprocess/README.md](dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
-You can download it from [Zenodo](https://zenodo.org/records/13744999/files/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
+You can download it from [Zenodo](https://zenodo.org/records/13744999/files/demo_data.zip)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
 
 ```bash
-wget https://zenodo.org/record/12751363/files/demo_data.zip
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/demo_data.zip
 unzip demo_data.zip -p /home/kin/data/av2
 ```
 
@@ -114,7 +116,7 @@ python train.py model=fastflow3d lr=4e-5 epochs=20 batch_size=16 loss_fn=ff3dLos
 > However, we kept the setting on lr=2e-6 and 50 epochs in (SeFlow & DeFlow) paper experiments for the fair comparison with ZeroFlow where we directly use their provided weights. 
 > We suggest afterward researchers or users to use the setting here (larger lr and smaller epoch) for faster converge and better performance.
 
-To help community benchmarking, we provide our weights including fastflow3d, deflow in [Zendo](https://zenodo.org/records/13744999). 
+To help community benchmarking, we provide our weights including fastflow3d, deflow in [HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow). 
 These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
 
 ## 2. Evaluation
@@ -124,7 +126,7 @@ You can view Wandb dashboard for the training and evaluation results or run/subm
 Since in training, we save all hyper-parameters and model checkpoints, the only thing you need to do is to specify the checkpoint path. Remember to set the data path correctly also.
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/13744999/files/deflow_best.ckpt
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/deflow_best.ckpt
 
 python eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=val # it will directly prints all metric
 # it will output a command with absolute path of a zip file for you to submit to leaderboard
@@ -157,7 +159,7 @@ We provide a script to visualize the results of the model. You can specify the c
 
 ```bash
 # downloaded pre-trained weight, or train by yourself
-wget https://zenodo.org/records/13744999/files/deflow_best.ckpt
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/deflow_best.ckpt
 
 python save.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2/preprocess/sensor/vis
 
