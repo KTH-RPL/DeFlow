@@ -18,18 +18,12 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
-<<<<<<<< HEAD:main.py
-from scripts.network.dataloader import DynamicMapData
-from scripts.pl_model import ModelWrapper
 
-@hydra.main(version_base=None, config_path="conf", config_name="dynamicmap")
-========
-from src.dataset import HDF5Dataset
+from src.dataset import DynamicMapData
 from src.trainer import ModelWrapper
 from src.utils import bc
 
-@hydra.main(version_base=None, config_path="conf", config_name="save")
->>>>>>>> main:save.py
+@hydra.main(version_base=None, config_path="conf", config_name="dynamicmap")
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
@@ -56,13 +50,8 @@ def main(cfg):
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)
     trainer.test(model = mymodel, \
-<<<<<<<< HEAD:main.py
-                 dataloaders = DataLoader(DynamicMapData(cfg.dataset_path), batch_size=1, shuffle=False))
-========
-                 dataloaders = DataLoader(\
-                     HDF5Dataset(cfg.dataset_path, n_frames=checkpoint_params.cfg.num_frames if 'num_frames' in checkpoint_params.cfg else 2), \
-                    batch_size=1, shuffle=False))
->>>>>>>> main:save.py
+                 dataloaders = DataLoader( \
+                     DynamicMapData(cfg.dataset_path), batch_size=1, shuffle=False))
     wandb.finish()
 
 if __name__ == "__main__":

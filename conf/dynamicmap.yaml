@@ -1,14 +1,16 @@
 
-checkpoint: /home/kin/model_zoo/deflow.ckpt
-dataset_path: /home/kin/data/Dynamic_Papers_assets/Benchmark_data/00
+checkpoint: /home/kin/deflow_best.ckpt
+dataset_path: /home/kin/DATA_HDD/Dynamic_Papers_assets/Benchmark_data/00
 wandb_mode: offline # [offline, disabled, online]
-# no need to change
+
+
+# no need to change, automatically change through checkpoint
 slurm_id: 00000
 output: ${model.name}-${slurm_id}
 gpus: 1
 seed: 42069
 eval_only: True
-wandb_mode: offline # [offline, disabled, online]
+res_name: 
 defaults:
   - hydra: default
   - model: deflow

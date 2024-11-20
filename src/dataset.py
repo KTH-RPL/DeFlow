@@ -16,68 +16,14 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import h5py, os, pickle, argparse, sys
 from tqdm import tqdm
+import numpy as np
+from linefit import ground_seg
+from pathlib import Path
+from scipy.spatial.transform import Rotation as R
 BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '..' ))
 sys.path.append(BASE_DIR)
+from src.utils import pcdpy3
 
-def collate_fn_pad(batch):
-
-    num_frames = 2
-    while f'pch{num_frames - 1}' in batch[0]:
-        num_frames += 1
-
-    # padding the data
-    pc0_after_mask_ground, pc1_after_mask_ground= [], []
-    pch_after_mask_ground = [[] for _ in range(num_frames - 2)]
-    for i in range(len(batch)):
-        pc0_after_mask_ground.append(batch[i]['pc0'][~batch[i]['gm0']])
-        pc1_after_mask_ground.append(batch[i]['pc1'][~batch[i]['gm1']])
-        for j in range(1, num_frames - 1):
-            pch_after_mask_ground[j-1].append(batch[i][f'pch{j}'][~batch[i][f'gmh{j}']])
-
-    pc0_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc0_after_mask_ground, batch_first=True, padding_value=torch.nan)
-    pc1_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc1_after_mask_ground, batch_first=True, padding_value=torch.nan)
-    pch_after_mask_ground = [torch.nn.utils.rnn.pad_sequence(pch_, batch_first=True, padding_value=torch.nan) for pch_ in pch_after_mask_ground]
-
-
-    res_dict =  {
-        'pc0': pc0_after_mask_ground,
-        'pc1': pc1_after_mask_ground,
-        'pose0': [batch[i]['pose0'] for i in range(len(batch))],
-        'pose1': [batch[i]['pose1'] for i in range(len(batch))]
-    }
-
-    for j in range(1, num_frames - 1):
-        res_dict[f'pch{j}'] = pch_after_mask_ground[j-1]
-        res_dict[f'poseh{j}'] = [batch[i][f'poseh{j}'] for i in range(len(batch))]
-
-    if 'flow' in batch[0]:
-        flow = torch.nn.utils.rnn.pad_sequence([batch[i]['flow'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
-        flow_is_valid = torch.nn.utils.rnn.pad_sequence([batch[i]['flow_is_valid'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
-        flow_category_indices = torch.nn.utils.rnn.pad_sequence([batch[i]['flow_category_indices'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
-        res_dict['flow'] = flow
-        res_dict['flow_is_valid'] = flow_is_valid
-        res_dict['flow_category_indices'] = flow_category_indices
-
-    if 'ego_motion' in batch[0]:
-        res_dict['ego_motion'] = [batch[i]['ego_motion'] for i in range(len(batch))]
-        
-    if 'pc0_dynamic' in batch[0]:
-        pc0_dynamic_after_mask_ground, pc1_dynamic_after_mask_ground= [], []
-        for i in range(len(batch)):
-            pc0_dynamic_after_mask_ground.append(batch[i]['pc0_dynamic'][~batch[i]['gm0']])
-            pc1_dynamic_after_mask_ground.append(batch[i]['pc1_dynamic'][~batch[i]['gm1']])
-        pc0_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc0_dynamic_after_mask_ground, batch_first=True, padding_value=0)
-        pc1_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc1_dynamic_after_mask_ground, batch_first=True, padding_value=0)
-        res_dict['pc0_dynamic'] = pc0_dynamic_after_mask_ground
-        res_dict['pc1_dynamic'] = pc1_dynamic_after_mask_ground
-
-    return res_dict
-
-import os, sys
-BASE_DIR = os.path.abspath(os.path.join( os.path.dirname( __file__ ), '../..' ))
-sys.path.append(BASE_DIR)
-from scripts.utils import pcdpy3
-from linefit import ground_seg
 def xyzqwxyz_to_matrix(xyzqwxyz: list):
     """
     input: xyzqwxyz: [x, y, z, qx, qy, qz, qw] a list of 7 elements
@@ -148,6 +94,60 @@ class DynamicMapData(Dataset):
         res_dict['pose1'] = torch.tensor(pose1)
         res_dict['world_pc0'] = torch.tensor(pc0.astype(np.float32))
         return res_dict
+
+def collate_fn_pad(batch):
+
+    num_frames = 2
+    while f'pch{num_frames - 1}' in batch[0]:
+        num_frames += 1
+
+    # padding the data
+    pc0_after_mask_ground, pc1_after_mask_ground= [], []
+    pch_after_mask_ground = [[] for _ in range(num_frames - 2)]
+    for i in range(len(batch)):
+        pc0_after_mask_ground.append(batch[i]['pc0'][~batch[i]['gm0']])
+        pc1_after_mask_ground.append(batch[i]['pc1'][~batch[i]['gm1']])
+        for j in range(1, num_frames - 1):
+            pch_after_mask_ground[j-1].append(batch[i][f'pch{j}'][~batch[i][f'gmh{j}']])
+
+    pc0_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc0_after_mask_ground, batch_first=True, padding_value=torch.nan)
+    pc1_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc1_after_mask_ground, batch_first=True, padding_value=torch.nan)
+    pch_after_mask_ground = [torch.nn.utils.rnn.pad_sequence(pch_, batch_first=True, padding_value=torch.nan) for pch_ in pch_after_mask_ground]
+
+
+    res_dict =  {
+        'pc0': pc0_after_mask_ground,
+        'pc1': pc1_after_mask_ground,
+        'pose0': [batch[i]['pose0'] for i in range(len(batch))],
+        'pose1': [batch[i]['pose1'] for i in range(len(batch))]
+    }
+
+    for j in range(1, num_frames - 1):
+        res_dict[f'pch{j}'] = pch_after_mask_ground[j-1]
+        res_dict[f'poseh{j}'] = [batch[i][f'poseh{j}'] for i in range(len(batch))]
+
+    if 'flow' in batch[0]:
+        flow = torch.nn.utils.rnn.pad_sequence([batch[i]['flow'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
+        flow_is_valid = torch.nn.utils.rnn.pad_sequence([batch[i]['flow_is_valid'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
+        flow_category_indices = torch.nn.utils.rnn.pad_sequence([batch[i]['flow_category_indices'][~batch[i]['gm0']] for i in range(len(batch))], batch_first=True)
+        res_dict['flow'] = flow
+        res_dict['flow_is_valid'] = flow_is_valid
+        res_dict['flow_category_indices'] = flow_category_indices
+
+    if 'ego_motion' in batch[0]:
+        res_dict['ego_motion'] = [batch[i]['ego_motion'] for i in range(len(batch))]
+        
+    if 'pc0_dynamic' in batch[0]:
+        pc0_dynamic_after_mask_ground, pc1_dynamic_after_mask_ground= [], []
+        for i in range(len(batch)):
+            pc0_dynamic_after_mask_ground.append(batch[i]['pc0_dynamic'][~batch[i]['gm0']])
+            pc1_dynamic_after_mask_ground.append(batch[i]['pc1_dynamic'][~batch[i]['gm1']])
+        pc0_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc0_dynamic_after_mask_ground, batch_first=True, padding_value=0)
+        pc1_dynamic_after_mask_ground = torch.nn.utils.rnn.pad_sequence(pc1_dynamic_after_mask_ground, batch_first=True, padding_value=0)
+        res_dict['pc0_dynamic'] = pc0_dynamic_after_mask_ground
+        res_dict['pc1_dynamic'] = pc1_dynamic_after_mask_ground
+
+    return res_dict
 
 class HDF5Dataset(Dataset):
     def __init__(self, directory, n_frames=2, dufo=False, eval = False, leaderboard_version=1):

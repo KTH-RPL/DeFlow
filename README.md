@@ -33,7 +33,6 @@ If you have different arch, please build it by yourself `cd DeFlow && docker bui
 # option 1: pull from docker hub
 docker pull zhangkin/seflow
 
-Download pre-trained weights for models are available in [Zenodo](https://zenodo.org/records/12632962). The weight is trained on Argoverse 2 Sensor dataset only, while DynamicMap Benchmark `av2` is from Argoverse 2 Map dataset. So no overfitting issue.
 # run container
 docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data --name deflow zhangkin/seflow /bin/zsh
 # then `mamba activate seflow` python environment is ready to use
@@ -41,11 +40,13 @@ docker run -it --gpus all -v /dev/shm:/dev/shm -v /home/kin/data:/home/kin/data 
 
 ## 1. DynamicMap Inference
 
-```bash
-wget https://zenodo.org/records/12632962/files/deflow_official.ckpt
+Download pre-trained weights for models are available in [huggingface](https://huggingface.co/kin-zhang/OpenSceneFlow). The weight is trained on Argoverse 2 Sensor dataset only, while DynamicMap Benchmark `av2` is from Argoverse 2 Map dataset. So no overfitting issue.
 
-python main.py checkpoint=/home/kin/deflow_official.ckpt dataset_path=/home/kin/data/00
-python main.py checkpoint=/home/kin/deflow_official.ckpt dataset_path=/home/kin/data/av2
+```bash
+wget https://huggingface.co/kin-zhang/OpenSceneFlow/resolve/main/deflow_best.ckpt
+
+python main.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/00
+python main.py checkpoint=/home/kin/deflow_best.ckpt dataset_path=/home/kin/data/av2
 ```
 
 

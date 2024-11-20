@@ -323,7 +323,7 @@ class ModelWrapper(LightningModule):
         #     f[key].create_dataset('flow_est', data=final_flow.cpu().detach().numpy().astype(np.float32))
 
     def on_test_epoch_end(self):
-        from scripts.utils.pcdpy3 import save_pcd
+        from src.utils.pcdpy3 import save_pcd
         print(f"\n\nModel: {self.model.__class__.__name__}, Checkpoint from: {self.load_checkpoint_path}")
         self.model.timer.print(random_colors=True, bold=True)
         # to numpy 
