@@ -9,7 +9,7 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 
 Task: Scene Flow Estimation in Autonomous Driving. 
 
-🤗 2024/11/18 16:17: Update model and demo data download link through HuggingFace, Personally I found `wget` from HuggingFace link is much faster than Zenodo.
+🤗 2024/11/18 16:17: Update model and demo data download link through HuggingFace, personally I found that `wget` from the HuggingFace link is much faster than Zenodo.
 
 📜 2024/07/24: Merging SeFlow & DeFlow code together, lighter setup and easier running.
 
@@ -102,22 +102,22 @@ python dataprocess/extract_av2.py --av2_type sensor --data_mode test --mask_dir 
 
 ### Train the model
 
-All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in our experiments.
+All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in DeFlow raw paper. You can check all parameters in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml), **if you will set wandb_mode=online**, maybe change all `entity="kth-rpl"` to your own account name.
 
-Best fine-tuned model train with following command by other default config in [conf/config.yaml](conf/config.yaml) and [conf/model/deflow.yaml](conf/model/deflow.yaml), if you will set wandb_mode=online, maybe change all `entity="kth-rpl"` to your own account name.
-
+Train DeFlow with the leaderboard submit config. [Runtime: Around 6-8 hours in 4x A100 GPUs.] Please change `batch_size`&`lr` accoordingly if you don't have enough GPU memory. (e.g. `batch_size=6` for 24GB GPU)
 ```bash
-python train.py model=deflow lr=2e-4 epochs=20 batch_size=16 loss_fn=deflowLoss
+python train.py model=deflow lr=2e-4 epochs=15 batch_size=16 loss_fn=deflowLoss
+# baseline in our paper:
 python train.py model=fastflow3d lr=4e-5 epochs=20 batch_size=16 loss_fn=ff3dLoss
 ```
 
 > [!NOTE]  
-> You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 20 for faster converge and better performance. 
-> However, we kept the setting on lr=2e-6 and 50 epochs in (SeFlow & DeFlow) paper experiments for the fair comparison with ZeroFlow where we directly use their provided weights. 
+> You may found the different settings in the paper that is all methods are enlarge learning rate to 2e-4 and decrease the epochs to 15 for faster converge and better performance (it's also our leaderboard model train config). 
+> However, we kept the setting on lr=2e-6 and 50 epochs in (SeFlow & DeFlow) paper experiments for **the fair comparison** with ZeroFlow where we directly use their provided weights. 
 > We suggest afterward researchers or users to use the setting here (larger lr and smaller epoch) for faster converge and better performance.
 
 To help community benchmarking, we provide our weights including fastflow3d, deflow in [HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow). 
-These checkpoints also include parameters and status of that epoch inside it. If you are interested in weights of ablation studies, please contact us.
+These checkpoints also include parameters and status of that epoch inside it.
 
 ## 2. Evaluation
 
