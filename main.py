@@ -1,13 +1,14 @@
 """
 # Created: 2023-12-26 12:41
 # Copyright (C) 2023-now, RPL, KTH Royal Institute of Technology
-# Author: Kin ZHANG  (https://kin-zhang.github.io/)
+# Author: Qingwen Zhang  (https://kin-zhang.github.io/)
 #
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
+# This file is part of DeFlow (https://github.com/KTH-RPL/DeFlow).
+# If you find this repo helpful, please cite the respective publication as 
+# listed on the above website.
 
 # Description: produce flow based on model predict and write into the dataset, 
-#              then use tests/scene_flow.py flow_mode="flow_est" to visualize the flow.
+#              then use `tools/visualization.py` to visualize the flow.
 """
 
 import torch
@@ -17,10 +18,18 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 import hydra, wandb, os, sys
 from hydra.core.hydra_config import HydraConfig
+<<<<<<<< HEAD:main.py
 from scripts.network.dataloader import DynamicMapData
 from scripts.pl_model import ModelWrapper
 
 @hydra.main(version_base=None, config_path="conf", config_name="dynamicmap")
+========
+from src.dataset import HDF5Dataset
+from src.trainer import ModelWrapper
+from src.utils import bc
+
+@hydra.main(version_base=None, config_path="conf", config_name="save")
+>>>>>>>> main:save.py
 def main(cfg):
     pl.seed_everything(cfg.seed, workers=True)
     output_dir = HydraConfig.get().runtime.output_dir
@@ -28,22 +37,32 @@ def main(cfg):
     if not os.path.exists(cfg.checkpoint):
         print(f"Checkpoint {cfg.checkpoint} does not exist. Need checkpoints for evaluation.")
         sys.exit(1)
-    
+
+    if cfg.res_name is None:
+        cfg.res_name = cfg.checkpoint.split("/")[-1].split(".")[0]
+        print(f"{bc.BOLD}NOTE{bc.ENDC}: res_name is not specified, use {bc.OKBLUE}{cfg.res_name}{bc.ENDC} as default.")
+
     checkpoint_params = DictConfig(torch.load(cfg.checkpoint)["hyper_parameters"])
     cfg.output = checkpoint_params.cfg.output
     cfg.model.update(checkpoint_params.cfg.model)
     mymodel = ModelWrapper.load_from_checkpoint(cfg.checkpoint, cfg=cfg, eval=True)
 
     wandb_logger = WandbLogger(save_dir=output_dir,
-                               entity="hdmaptest",
-                               project=f"sceneflow-eval", 
+                               entity="kth-rpl",
+                               project=f"deflow-eval", 
                                name=f"{cfg.output}",
-                               offline=(cfg.wandb_mode == "offline"))
+                               offline=True)
     
     trainer = pl.Trainer(logger=wandb_logger, devices=1)
     # NOTE(Qingwen): search & check in pl_model.py : def test_step(self, batch, res_dict)
     trainer.test(model = mymodel, \
+<<<<<<<< HEAD:main.py
                  dataloaders = DataLoader(DynamicMapData(cfg.dataset_path), batch_size=1, shuffle=False))
+========
+                 dataloaders = DataLoader(\
+                     HDF5Dataset(cfg.dataset_path, n_frames=checkpoint_params.cfg.num_frames if 'num_frames' in checkpoint_params.cfg else 2), \
+                    batch_size=1, shuffle=False))
+>>>>>>>> main:save.py
     wandb.finish()
 
 if __name__ == "__main__":

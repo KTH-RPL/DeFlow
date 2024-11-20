@@ -1,3 +1,0 @@
-[submodule "mmcv"]
-	path = mmcv
-	url = https://github.com/open-mmlab/mmcv.git
