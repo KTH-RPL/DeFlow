@@ -63,6 +63,7 @@ CUDA package (need install nvcc compiler), the compile time is around 1-5 minute
 mamba activate deflow
 # CUDA already install in python environment. I also tested others version like 11.3, 11.4, 11.7, 11.8 all works
 cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
+cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
 
 Or another environment setup choice is [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment, you can pull it by. 
