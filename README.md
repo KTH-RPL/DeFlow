@@ -9,7 +9,7 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 
 Task: Scene Flow Estimation in Autonomous Driving. 
 
-📜 2024/07/24: Merging all scene flow code to a codebase to update one general repo only. This repo will save DeFlow README and [cluster slurm files](assets/slurm).
+📜 2025/02/18: Merging all scene flow code to a codebase to update one general repo only. This repo still saved DeFlow README and [cluster slurm files](assets/slurm).
 
 🤗 2024/11/18 16:17: Update model and demo data download link through HuggingFace, personally I found that `wget` from the HuggingFace link is much faster than Zenodo.
 
@@ -22,7 +22,7 @@ Check usage in [2. Evaluation](#2-evaluation) or [3. Visualization](#3-visualiza
 
 ## 0. Setup
 
-**Environment**: Clone the repo and build the environment, check [detail installation](./OpenSceneFlow/assets/README.md) for more information. [Conda](https://docs.conda.io/projects/miniconda/en/latest/)/[Mamba](https://github.com/mamba-org/mamba) is recommended.
+**Environment**: Clone the repo and build the environment, check [detail installation](https://github.com/KTH-RPL/OpenSceneFlow/assets/README.md) for more information. [Conda](https://docs.conda.io/projects/miniconda/en/latest/)/[Mamba](https://github.com/mamba-org/mamba) is recommended.
 
 
 ```bash
@@ -39,7 +39,7 @@ cd assets/cuda/mmcv && python ./setup.py install && cd ../../..
 cd assets/cuda/chamfer3D && python ./setup.py install && cd ../../..
 ```
 
-Or another environment setup choice is [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment, check more information in [OpenSceneFlow/assets/README.md](./OpenSceneFlow/assets/README.md#docker-environment).
+Or another environment setup choice is [Docker](https://en.wikipedia.org/wiki/Docker_(software)) which isolated environment, check more information in [OpenSceneFlow/assets/README.md](https://github.com/KTH-RPL/OpenSceneFlow/assets/README.md#docker-environment).
 
 
 
@@ -49,7 +49,7 @@ Note: Prepare raw data and process train data only needed run once for the task.
 
 ### Data Preparation
 
-Check [OpenSceneFlow/dataprocess/README.md](./OpenSceneFlow/dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
+Check [OpenSceneFlow/dataprocess/README.md](https://github.com/KTH-RPL/OpenSceneFlow/dataprocess/README.md#argoverse-20) for downloading tips for the raw Argoverse 2 dataset. Or maybe you want to have the **mini processed dataset** to try the code quickly, We directly provide one scene inside `train` and `val`. It already converted to `.h5` format and processed with the label data. 
 You can download it from [Zenodo](https://zenodo.org/records/13744999/files/demo_data.zip)/[HuggingFace](https://huggingface.co/kin-zhang/OpenSceneFlow/blob/main/demo_data.zip) and extract it to the data folder. And then you can skip following steps and directly run the [training script](#train-the-model).
 
 ```bash
@@ -59,7 +59,7 @@ unzip demo_data.zip -p /home/kin/data/av2
 
 ### Train the model
 
-All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in DeFlow raw paper. You can check all parameters in [OpenSceneFlow/conf/config.yaml](./OpenSceneFlow/conf/config.yaml) and [OpenSceneFlow/conf/model/deflow.yaml](./OpenSceneFlow/conf/model/deflow.yaml), **if you will set wandb_mode=online**, maybe change all `entity="kth-rpl"` to your own account name.
+All local benchmarking methods and ablation studies can be done through command with different config, check [`assets/slurm`](assets/slurm) for all the commands we used in DeFlow raw paper. You can check all parameters in [OpenSceneFlow/conf/config.yaml](https://github.com/KTH-RPL/OpenSceneFlow/conf/config.yaml) and [OpenSceneFlow/conf/model/deflow.yaml](https://github.com/KTH-RPL/OpenSceneFlow/conf/model/deflow.yaml), **if you will set wandb_mode=online**, maybe change all `entity="kth-rpl"` to your own account name.
 
 Train DeFlow with the leaderboard submit config. [Runtime: Around 6-8 hours in 4x A100 GPUs.] Please change `batch_size`&`lr` accoordingly if you don't have enough GPU memory. (e.g. `batch_size=6` for 24GB GPU)
 ```bash
@@ -93,22 +93,7 @@ python eval.py checkpoint=/home/kin/deflow_best.ckpt av2_mode=test leaderboard_v
 
 Check all detailed result files (presented in our paper Table 1) in [this discussion](https://github.com/KTH-RPL/DeFlow/discussions/2).
 
-To submit to the Online Leaderboard, if you select `av2_mode=test`, it should be a zip file for you to submit to the leaderboard.
-Note: The leaderboard result in DeFlow main paper is [version 1](https://eval.ai/web/challenges/challenge-page/2010/evaluation), as [version 2](https://eval.ai/web/challenges/challenge-page/2210/overview) is updated after DeFlow paper.
-
-```bash
-# since the env may conflict we set new on deflow, we directly create new one:
-mamba create -n py37 python=3.7
-mamba activate py37
-pip install "evalai"
-
-# Step 2: login in eval and register your team
-evalai set-token <your token>
-
-# Step 3: Copy the command pop above and submit to leaderboard
-evalai challenge 2010 phase 4018 submit --file av2_submit.zip --large --private
-evalai challenge 2210 phase 4396 submit --file av2_submit_v2.zip --large --private
-```
+To submit to the Online Leaderboard, please follow the [updated codebase link](https://github.com/KTH-RPL/OpenSceneFlow/tree/main#3-evaluation).
 
 ## 3. Visualization
 
