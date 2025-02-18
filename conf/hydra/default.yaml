@@ -1,2 +1,0 @@
-run:
-  dir: logs/jobs/${output}/${now:%m-%d-%H-%M}

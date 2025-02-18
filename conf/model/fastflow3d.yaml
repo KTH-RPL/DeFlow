@@ -1,8 +1,0 @@
-name: fastflow3d
-
-target:
-  _target_: src.models.FastFlow3D
-  voxel_size: ${voxel_size}
-  point_cloud_range: ${point_cloud_range}
-  
-val_monitor: val/Dynamic/Mean
