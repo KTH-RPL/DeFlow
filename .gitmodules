@@ -1,0 +1,3 @@
+[submodule "OpenSceneFlow"]
+	path = OpenSceneFlow
+	url = https://github.com/KTH-RPL/OpenSceneFlow.git
