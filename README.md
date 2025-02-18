@@ -9,7 +9,7 @@ DeFlow: Decoder of Scene Flow Network in Autonomous Driving
 
 Task: Scene Flow Estimation in Autonomous Driving. 
 
-📜 2025/02/18: Merging all scene flow code to a codebase to update one general repo only. This repo still saved DeFlow README and [cluster slurm files](assets/slurm).
+📜 2025/02/18: Merging all scene flow code to [OpenSceneFLow codebase](https://github.com/KTH-RPL/OpenSceneFlow) for afterward code maintenance. This repo saved README, [cluster slurm files](assets/slurm), and [quick core file](decoder.py) in DeFlow. The old source code branch is also [available here](https://github.com/KTH-RPL/DeFlow/tree/source).
 
 🤗 2024/11/18 16:17: Update model and demo data download link through HuggingFace, personally I found that `wget` from the HuggingFace link is much faster than Zenodo.
 
